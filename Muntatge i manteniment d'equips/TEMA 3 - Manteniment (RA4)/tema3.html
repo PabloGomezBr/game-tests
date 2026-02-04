@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RA4 • Manteniment (SMX 1r)</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#111b3a;
+      --card:#0f1733cc;
+      --stroke:#2b3a7a;
+      --text:#eaf1ff;
+      --muted:#a9b7e6;
+      --good:#2ee59d;
+      --bad:#ff4d6d;
+      --warn:#ffd166;
+      --b1:#ff3d8d;
+      --b2:#4d7cff;
+      --b3:#7c4dff;
+      --b4:#2ee59d;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --speed: 160ms;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      overflow-x:hidden;
+      background:
+        radial-gradient(1200px 800px at 15% 20%, rgba(77,124,255,.35), transparent 60%),
+        radial-gradient(900px 700px at 80% 35%, rgba(255,61,141,.25), transparent 60%),
+        radial-gradient(1000px 800px at 50% 90%, rgba(46,229,157,.18), transparent 65%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      position:relative;
+    }
+
+    /* Animated background grid */
+    .grid{
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(600px 400px at 50% 25%, black 30%, transparent 75%);
+      opacity:.7;
+      pointer-events:none;
+      animation: drift 9s linear infinite;
+    }
+    @keyframes drift{
+      0%{transform:translate3d(0,0,0)}
+      100%{transform:translate3d(-64px,-64px,0)}
+    }
+
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px 14px;
+      position:relative;
+      z-index:1;
+    }
+
+    .app{
+      width:min(980px, 100%);
+      display:grid;
+      gap:14px;
+    }
+
+    header{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(15,23,51,.82), rgba(15,23,51,.52));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width:0;
+    }
+    .logo{
+      width:44px; height:44px;
+      border-radius:14px;
+      background:
+        radial-gradient(18px 18px at 30% 35%, rgba(255,255,255,.65), transparent 60%),
+        linear-gradient(135deg, rgba(77,124,255,.95), rgba(255,61,141,.95));
+      box-shadow: 0 10px 20px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute; inset:-30%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+      transform: rotate(25deg);
+      animation: shine 3.2s ease-in-out infinite;
+    }
+    @keyframes shine{
+      0%,55%{transform:translateX(-60%) rotate(25deg)}
+      100%{transform:translateX(60%) rotate(25deg)}
+    }
+
+    .title{
+      display:flex; flex-direction:column;
+      line-height:1.1;
+      min-width:0;
+    }
+    .title b{font-size:14px; letter-spacing:.2px}
+    .title span{font-size:12px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+    .hud{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      font-size:12px;
+      user-select:none;
+    }
+    .pill strong{font-variant-numeric: tabular-nums}
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:12px;
+      transition: transform var(--speed) ease, background var(--speed) ease, border-color var(--speed) ease;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24)}
+    .btn:active{transform: translateY(0px) scale(.99)}
+    .btn.primary{
+      border-color: rgba(77,124,255,.45);
+      background: linear-gradient(135deg, rgba(77,124,255,.35), rgba(124,77,255,.28));
+    }
+
+    .stage{
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(15,23,51,.80), rgba(15,23,51,.45));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .progress{
+      height:10px;
+      background: rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      position:relative;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(46,229,157,.9), rgba(77,124,255,.9), rgba(255,61,141,.9));
+      transition: width 200ms linear;
+    }
+    .bar.glow{filter: drop-shadow(0 0 10px rgba(46,229,157,.35));}
+
+    .panel{
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+
+    .card{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      background: rgba(0,0,0,.10);
+      padding:14px;
+      display:grid;
+      gap:10px;
+      transform-origin: center;
+      animation: pop .22s ease-out;
+    }
+    @keyframes pop{
+      from{transform: translateY(6px) scale(.985); opacity:.0}
+      to{transform: translateY(0) scale(1); opacity:1}
+    }
+
+    .qhead{
+      display:flex; align-items:flex-start; gap:10px; justify-content:space-between;
+    }
+    .qmeta{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .tag{
+      font-size:11px;
+      color:var(--muted);
+      padding:6px 9px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+    }
+    .question{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.2px;
+      margin:0;
+      line-height:1.25;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .answers{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width:740px){
+      .answers{grid-template-columns: 1fr;}
+      .question{font-size:17px}
+    }
+
+    .opt{
+      position:relative;
+      border-radius: 16px;
+      padding:14px 14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      overflow:hidden;
+      user-select:none;
+      transition: transform var(--speed) ease, border-color var(--speed) ease, background var(--speed) ease;
+      min-height:58px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+    }
+    .opt:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.09)}
+    .opt:active{transform: translateY(0px) scale(.995)}
+    .badge{
+      width:26px; height:26px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      font-size:12px;
+      color:rgba(255,255,255,.95);
+      flex:0 0 auto;
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+    }
+    .c1{background: linear-gradient(135deg, rgba(255,61,141,.95), rgba(255,209,102,.55))}
+    .c2{background: linear-gradient(135deg, rgba(77,124,255,.95), rgba(124,77,255,.55))}
+    .c3{background: linear-gradient(135deg, rgba(124,77,255,.95), rgba(46,229,157,.55))}
+    .c4{background: linear-gradient(135deg, rgba(46,229,157,.95), rgba(77,124,255,.55))}
+
+    .opt.correct{
+      border-color: rgba(46,229,157,.65);
+      background: rgba(46,229,157,.12);
+      transform: translateY(-1px);
+    }
+    .opt.wrong{
+      border-color: rgba(255,77,109,.65);
+      background: rgba(255,77,109,.10);
+    }
+    .opt.dim{opacity:.55}
+
+    .footerRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .mini{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      user-select:none;
+    }
+    .toggle input{accent-color: #6f8cff}
+
+    /* Start / End screens */
+    .center{
+      text-align:center;
+      padding:20px;
+      display:grid;
+      gap:12px;
+    }
+    .big{
+      font-size:28px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      margin:6px 0 0;
+    }
+    .lead{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.4;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+      margin-top:6px;
+    }
+    @media (max-width:740px){.grid2{grid-template-columns:1fr}}
+    .set{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      text-align:left;
+      display:grid;
+      gap:8px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    select, input[type="number"]{
+      width:100%;
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      padding:10px 10px;
+      outline:none;
+      font-weight:800;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:7px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+    }
+
+    /* Confetti canvas */
+    #fx{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index: 3;
+    }
+
+    /* Tiny “shake” */
+    .shake{
+      animation: shake 260ms ease-in-out;
+    }
+    @keyframes shake{
+      0%{transform:translateX(0)}
+      25%{transform:translateX(-6px)}
+      55%{transform:translateX(5px)}
+      80%{transform:translateX(-3px)}
+      100%{transform:translateX(0)}
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding:10px 14px;
+      color:var(--text);
+      font-size:12px;
+      z-index: 4;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 140ms ease, transform 140ms ease;
+      backdrop-filter: blur(10px);
+    }
+    .toast.on{
+      opacity:1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <canvas id="fx"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <!-- Background music (optional): put "music.mp3" next to this HTML or change src -->
+  <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
+
+  <div class="wrap">
+    <div class="app" role="application" aria-label="Kahoot RA4">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <b>RA4 Kahoot • Diagnóstico y Mantenimiento</b>
+            <span>SMX 1r • Aleatorio • Rápido • Pool 50</span>
+          </div>
+        </div>
+        <div class="hud">
+          <div class="pill">Puntos: <strong id="score">0</strong></div>
+          <div class="pill">Racha: <strong id="streak">0</strong></div>
+          <button class="btn" id="musicBtn" title="Música de fondo">♪ Música</button>
+          <button class="btn" id="restartBtn" title="Reiniciar">↻ Reiniciar</button>
+        </div>
+      </header>
+
+      <section class="stage" aria-live="polite">
+        <div class="progress"><div class="bar glow" id="bar"></div></div>
+        <div class="panel" id="panel"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     *  Pool de 50 preguntas (català, distractors plausibles)
+     *  (Preguntes barrejades + respostes barrejades sempre)
+     ***********************/
+    const POOL = [
+      {cat:"BIOS/UEFI", q:"Un equip manté la data/hora mentre està connectat, però la perd quan es desconnecta completament. Quin element està més directament relacionat amb això?", a:["Emmagatzematge de configuració del firmware (CMOS/pila)","Mòdul de RAM principal","Controlador del disc","Sistema de fitxers"], c:0},
+      {cat:"BIOS/UEFI", q:"Quina funció és pròpia del firmware abans de carregar el sistema operatiu?", a:["Inicialitzar maquinari i fer comprovacions bàsiques","Instal·lar programes d’usuari","Gestionar permisos d’usuaris","Fer benchmarks de disc i CPU"], c:0},
+      {cat:"BIOS/UEFI", q:"Canviar l’ordre d’arrencada és especialment útil quan vols:", a:["Prioritzar un altre dispositiu d’inici","Canviar la quantitat de RAM detectada","Ajustar temperatures del sistema","Reparar sectors defectuosos del disc"], c:0},
+      {cat:"BIOS/UEFI", q:"Una opció com 'Halt On' (si existeix) es pot entendre com:", a:["Un criteri per aturar/continuar l’arrencada segons errors","Un mode de rendiment del disc","Un test automàtic del CPU","Un perfil de consum del monitor"], c:0},
+      {cat:"BIOS/UEFI", q:"'Quick Power On Self Test' s’associa principalment amb:", a:["Reduir temps d’arrencada retallant comprovacions","Comprovar SMART abans del SO","Forçar un test de GPU","Augmentar puntuació de CPU"], c:0},
+      {cat:"BIOS/UEFI", q:"Per què la tecla d’accés a BIOS/UEFI varia entre equips?", a:["Depèn de fabricant/model i configuració del firmware","Depèn del navegador instal·lat","Depèn del tipus de disc","Depèn de la temperatura del CPU"], c:0},
+      {cat:"BIOS/UEFI", q:"Activar la virtualització al firmware sol ser necessari per:", a:["Executar màquines virtuals amb suport de maquinari","Millorar el rendiment seqüencial del disc","Eliminar fragmentació automàticament","Canviar el mode d’arrencada del SO"], c:0},
+      {cat:"BIOS/UEFI", q:"'Wake on LAN' permet principalment:", a:["Encendre l’equip mitjançant un senyal de xarxa","Reparar errors d’arrencada del disc","Fer un test complet de memòria","Bloquejar l’accés al firmware"], c:0},
+      {cat:"BIOS/UEFI", q:"El 'Serial Number' que mostra el firmware normalment és:", a:["Un identificador del sistema/placa útil per inventari o suport","Un valor de salut del disc","La velocitat del ventilador","La puntuació d’un benchmark"], c:0},
+      {cat:"BIOS/UEFI", q:"L’overclock del CPU implica principalment:", a:["Modificar paràmetres per augmentar rendiment amb més consum/temperatura","Augmentar capacitat de disc","Canviar el sistema de fitxers","Activar SMART"], c:0},
+
+      {cat:"POST", q:"Senyals acústics (beeps) just en engegar, abans del SO, solen indicar:", a:["Errors detectats en la fase inicial d’arrencada","Notificacions del sistema operatiu","Avisos de xarxa","Resultats d’un benchmark"], c:0},
+      {cat:"POST", q:"Per què els beeps poden significar coses diferents segons l’equip?", a:["Depèn del fabricant/implementació del firmware","Depèn del tipus de ratolí","Depèn de la resolució del monitor","Depèn de la versió del navegador"], c:0},
+      {cat:"POST", q:"Quin símptoma encaixa millor amb un POST que no completa?", a:["No arriba a carregar el SO ni mostra seqüència normal d’inici","Windows va lent obrint pestanyes","La CPU treu menys puntuació en un test","El disc baixa una mica en seqüencial"], c:0},
+      {cat:"POST", q:"Si apareix un error de teclat abans del SO, el problema s’ha produït:", a:["Abans que el sistema operatiu prengui el control","Després de carregar controladors del SO","Només en iniciar sessió","Quan s’executa un benchmark"], c:0},
+
+      {cat:"Arrencada", q:"Si l’equip arrenca bé amb un USB posat però no sense, una causa plausible és:", a:["Ordre d’arrencada o dispositiu intern no prioritzat","El monitor és incompatible","La RAM està necessàriament trencada","La GPU està en mode estalvi"], c:0},
+      {cat:"Arrencada", q:"Si poses primer un dispositiu sense sistema a l’ordre d’arrencada, el resultat més habitual és:", a:["Intent d’arrencada fallit o missatge de 'no boot device'","Millora automàtica de rendiment","Reparació de sectors defectuosos","Activació de mode segur"], c:0},
+
+      {cat:"Diagnosi", q:"En una diagnosi ordenada, començar per comprovacions simples és útil perquè:", a:["Descarta causes freqüents abans d’accions costoses","Assegura que sempre és programari","Evita revisar maquinari","Fa innecessària la documentació"], c:0},
+      {cat:"Diagnosi", q:"'Procés d’eliminació' vol dir:", a:["Provar hipòtesis i descartar causes fins trobar la real","Canviar peces a l’atzar","Fer només proves de rendiment","Reiniciar repetidament sense canviar res"], c:0},
+      {cat:"Diagrama de flux", q:"En un diagrama de flux, una decisió és:", a:["Un punt amb bifurcació segons el resultat","Un pas final de conclusions","Una lectura de sensor","Una acció del sistema operatiu"], c:0},
+      {cat:"Diagnosi", q:"Documentar què s’ha provat i què ha funcionat serveix sobretot per:", a:["Repetir la solució i facilitar futures incidències","Augmentar rendiment del disc","Canviar valors del firmware","Baixar la temperatura del CPU"], c:0},
+
+      {cat:"Diagnosi", q:"Davant 'pantalla negra', un primer pas lògic abans d’obrir el PC és:", a:["Comprovar alimentació del monitor i connexions de vídeo","Desfragmentar el disc","Actualitzar el firmware immediatament","Fer un benchmark de CPU"], c:0},
+      {cat:"Diagnosi", q:"Si el monitor funciona en un altre equip, el que queda més descartat és:", a:["Que el monitor sigui la causa principal","Que el disc estigui lent","Que l’ordre d’arrencada estigui malament","Que el CPU tingui poca memòria cau"], c:0},
+      {cat:"Diagnosi", q:"Si després de provar monitor i cable el problema continua en un sol equip, és més coherent focalitzar-se en:", a:["Connexions internes/GPU/RAM i arrencada","El monitor un altre cop","La xarxa Wi-Fi","El navegador i extensions"], c:0},
+      {cat:"Diagnosi", q:"Quan sospites d’una targeta mal connectada, una acció coherent és:", a:["Revisar inserció, netejar contacte si cal i recol·locar","Format ràpid del disc","Canviar idioma del sistema","Executar un test del disc com a únic pas"], c:0},
+
+      {cat:"CPU-Z", q:"El 'stepping' del processador indica habitualment:", a:["Una revisió/iteració del xip dins el mateix model","La temperatura del nucli","El rendiment del disc","Les hores d’ús del disc"], c:0},
+      {cat:"CPU-Z", q:"Diferenciar L1 Data i L1 Instruction implica:", a:["Funcions diferents dins la memòria cau L1","Dos discos físics diferents","La RAM dividida en particions","El SO treballant en dos modes"], c:0},
+      {cat:"CPU-Z", q:"Una dada típica per obtenir amb CPU-Z (i no amb eines de disc) és:", a:["Informació detallada de CPU/placa o voltatges","Salut SMART del disc","Velocitat seqüencial del disc","Power-On Hours del disc"], c:0},
+      {cat:"CPU-Z", q:"Quan es parla de fabricació en 'nm' s’està referint a:", a:["Tecnologia de fabricació del xip en nanòmetres","Capacitat del disc","RPM del ventilador","Resolució del monitor"], c:0},
+
+      {cat:"HWiNFO", q:"Una 'temperatura màxima' superior a l’actual reflecteix:", a:["El pic més alt registrat durant el monitoratge","El límit fix del fabricant","Un valor estimat aleatori","La temperatura d’arrencada"], c:0},
+      {cat:"HWiNFO", q:"Que un sensor de potència no aparegui en tots els equips sol ser perquè:", a:["Depèn del suport de sensors del maquinari","Només apareix amb SSD","Requereix Internet","Depèn del navegador"], c:0},
+      {cat:"HWiNFO", q:"Si la temperatura puja amb càrrega i baixa en repòs, això indica principalment:", a:["Resposta tèrmica normal segons càrrega","Sectors defectuosos al disc","Canvi de mode del firmware","Problema de monitor"], c:0},
+
+      {cat:"SMART", q:"La utilitat principal de SMART és:", a:["Ajudar a detectar indicadors de possible fallada del disc","Augmentar velocitat automàticament","Reparar físicament el disc","Canviar l’ordre d’arrencada"], c:0},
+      {cat:"Discs", q:"La desfragmentació és rellevant en HDD perquè:", a:["La disposició física de dades afecta el temps d’accés","No poden llegir dades fragmentades","No tenen memòria cau","No suporten sistemes moderns"], c:0},
+      {cat:"Discs", q:"En SSD no es recomana desfragmentar habitualment perquè:", a:["Aporta poc i genera escriptures innecessàries","Activa mode només lectura","Desactiva SMART","Impedeix entrar a BIOS"], c:0},
+      {cat:"Discs", q:"Sectors defectuosos poden provocar:", a:["Errors i possible pèrdua de dades o degradació","Millora en aleatori 4K","Més puntuació de CPU","Baixada automàtica de temperatura"], c:0},
+
+      {cat:"CrystalDiskMark", q:"La diferència clau entre prova seqüencial i aleatòria és:", a:["El patró d’accés a dades que es mesura","La marca del disc","El mode d’arrencada","El tipus de memòria cau de la CPU"], c:0},
+      {cat:"CrystalDiskMark", q:"Quin ús s’assembla més a accés aleatori 4K?", a:["Molts accessos petits repartits (fitxers petits/sistema)","Còpia d’un fitxer molt gran seguit","Canviar ordre d’arrencada","Configurar data/hora al firmware"], c:0},
+      {cat:"CrystalDiskMark", q:"Quan compares resultats entre equips, és important mantenir paràmetres consistents perquè:", a:["Les mesures siguin comparables","SMART no falli","El firmware no canviï de mode","La RAM no es reconfiguri"], c:0},
+
+      {cat:"Cinebench", q:"Multi Core vs Single Core serveix per observar:", a:["Rendiment amb tots els nuclis vs amb un de sol","Seqüencial vs aleatori del disc","Temperatura del disc vs del monitor","Hores d’ús vs nombre d’enceses"], c:0},
+      {cat:"Cinebench", q:"No executar altres aplicacions durant un test de CPU evita:", a:["Interferències que alterin el resultat","Canvis automàtics de firmware","Pèrdua de capacitat del disc","Desactivació de sensors"], c:0},
+      {cat:"Rendiment", q:"Una mala ventilació pot reduir rendiment perquè:", a:["Augmenta temperatura i el sistema limita rendiment/estabilitat","Abaixa tensió del disc","Activa sectors defectuosos","Impedeix entrar al firmware"], c:0},
+
+      {cat:"Windows", q:"Per veure consum de CPU/RAM/Disc per processos, una eina adequada és:", a:["Administrador de tareas / Monitor de recursos","CPU-Z","CrystalDiskInfo","BIOS Setup"], c:0},
+      {cat:"Windows", q:"Copiar un fitxer gran dins del mateix disc tendeix a pujar sobretot:", a:["Disc","GPU","Xarxa","Firmware"], c:0},
+      {cat:"Windows", q:"En Administrador de dispositius, un indicador típic de problema és:", a:["Simbologia d’avís/errada al dispositiu","Puntuació baixa a un test de CPU","Lectura RND baixa al disc","Data/hora incorrecta"], c:0},
+      {cat:"Windows", q:"Si obrir moltes pestanyes fa pujar la RAM, la lectura més coherent és:", a:["És esperable per més càrrega i dades en memòria","És prova directa de sectors defectuosos","Indica firmware corrupte","És exclusiu d’overclock"], c:0},
+
+      {cat:"Linux", q:"Una eina clàssica en terminal per veure processos de forma contínua és:", a:["top","cd","ping","nano"], c:0},
+      {cat:"Linux", q:"htop sol destacar respecte top per:", a:["Interfície més clara i gestió més còmoda","Mesurar SMART","Mesurar seqüencial del disc","Canviar BIOS"], c:0},
+      {cat:"Linux", q:"Si una acció canvia CPU/RAM en Linux, la lectura més correcta és:", a:["El consum depèn de la càrrega, com en altres sistemes","La RAM no pot variar en Linux","Només pot pujar el disc","Indica error del firmware"], c:0},
+      {cat:"Linux", q:"Si compares top i htop, el més habitual és trobar diferències de:", a:["Visualització i facilitat d’ús","Que un mesura disc i l’altre CPU","Que un només funciona amb SSD","Que un canvia el mode d’arrencada"], c:0},
+
+      {cat:"Diagnosi", q:"Equip encén ventiladors/LED però no hi ha imatge: primera acció amb millor relació causa-efecte:", a:["Revisar connexions de vídeo i reinsertar RAM/GPU si cal","Desfragmentar disc","Fer test de CPU","Canviar data/hora"], c:0},
+      {cat:"Diagnosi", q:"Si després de reinsertar la GPU torna la imatge, la causa més probable era:", a:["Mal contacte o mala inserció del connector/targeta","Error SMART imminent","Problema de navegador","Configuració d’idioma"], c:0},
+      {cat:"Diagnosi", q:"Artefactes visuals sota càrrega apunten de forma plausible a:", a:["GPU/memòria associada/temperatures","Pila CMOS","Ordre d’arrencada","Fragmentació del disc"], c:0},
+      {cat:"Firmware", q:"Bona pràctica abans de tocar valors sensibles al firmware:", a:["Anotar valors originals per poder revertir","Fer un benchmark del disc","Desfragmentar sempre","Posar ventiladors al màxim"], c:0},
+      {cat:"Firmware", q:"Criteri sensat per actualitzar firmware quan el sistema és estable:", a:["Fer-ho només si aporta correcció/compatibilitat necessària","Fer-ho sempre per rutina","Fer-ho quan baixa seqüencial del disc","Fer-ho quan el navegador va lent"], c:0},
+    ];
+
+    if (POOL.length !== 50) console.warn("POOL debería tener 50 preguntas. Ahora:", POOL.length);
+
+    /***********************
+     *  Utilidades
+     ***********************/
+    const $ = (sel) => document.querySelector(sel);
+    const panel = $("#panel");
+    const bar = $("#bar");
+    const scoreEl = $("#score");
+    const streakEl = $("#streak");
+    const toastEl = $("#toast");
+    const fx = $("#fx");
+    const bgm = $("#bgm");
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = (Math.random()*(i+1))|0;
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("on");
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(()=>toastEl.classList.remove("on"), 900);
+    }
+
+    // Beep SFX (sin archivos externos)
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+    function beep(type="good"){
+      try{
+        if(!actx) actx = new AudioCtx();
+        const t0 = actx.currentTime;
+        const o = actx.createOscillator();
+        const g = actx.createGain();
+        o.type = "triangle";
+        o.frequency.value = (type==="good") ? 740 : 220;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.15, t0+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+0.18);
+        o.connect(g).connect(actx.destination);
+        o.start(t0);
+        o.stop(t0+0.2);
+      }catch(e){ /* ignore */ }
+    }
+
+    /***********************
+     *  Confetti
+     ***********************/
+    const confetti = {
+      parts: [],
+      running: false,
+      resize(){
+        fx.width = window.innerWidth * devicePixelRatio;
+        fx.height = window.innerHeight * devicePixelRatio;
+      },
+      burst(x, y){
+        this.resize();
+        const N = 120;
+        for(let i=0;i<N;i++){
+          this.parts.push({
+            x: x*devicePixelRatio,
+            y: y*devicePixelRatio,
+            vx: (Math.random()*2-1) * 8 * devicePixelRatio,
+            vy: (Math.random()*-1.2-0.2) * 12 * devicePixelRatio,
+            g: 0.55 * devicePixelRatio,
+            s: (Math.random()*3+2) * devicePixelRatio,
+            a: 1,
+            r: Math.random()*Math.PI,
+            vr: (Math.random()*2-1)*0.25
+          });
+        }
+        if(!this.running){
+          this.running = true;
+          requestAnimationFrame(()=>this.tick());
+        }
+      },
+      tick(){
+        const ctx = fx.getContext("2d");
+        ctx.clearRect(0,0,fx.width,fx.height);
+        for(const p of this.parts){
+          p.vy += p.g;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.r += p.vr;
+          p.a *= 0.985;
+        }
+        this.parts = this.parts.filter(p => p.a > 0.06 && p.y < fx.height + 40*devicePixelRatio);
+        for(const p of this.parts){
+          ctx.save();
+          ctx.globalAlpha = p.a;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.r);
+          ctx.fillStyle = `hsl(${(p.x+p.y)%360} 90% 60%)`;
+          ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s*0.65);
+          ctx.restore();
+        }
+        if(this.parts.length){
+          requestAnimationFrame(()=>this.tick());
+        } else {
+          this.running = false;
+        }
+      }
+    };
+    window.addEventListener("resize", ()=>confetti.resize(), {passive:true});
+
+    /***********************
+     *  Estado del juego
+     ***********************/
+    const state = {
+      started:false,
+      idx:0,
+      total:20,
+      score:0,
+      streak:0,
+      correct:0,           // ✅ NUEVO: contador de aciertos
+      streakMode:true,     // ✅ NUEVO: modo rachas on/off
+      timerOn:false,
+      timePerQ:12,
+      timeLeft:0,
+      tickId:null,
+      questions:[]
+    };
+
+    function setBar(){
+      const pct = state.started ? (state.idx/state.total)*100 : 0;
+      bar.style.width = pct.toFixed(2) + "%";
+    }
+
+    function reset(){
+      clearInterval(state.tickId);
+      state.started = false;
+      state.idx = 0;
+      state.score = 0;
+      state.streak = 0;
+      state.correct = 0;     // ✅ NUEVO
+      state.questions = [];
+      scoreEl.textContent = "0";
+      streakEl.textContent = "0";
+      setBar();
+      renderStart();
+    }
+
+    /***********************
+     *  Mezcla preguntas y opciones (siempre)
+     ***********************/
+    function buildRun(total){
+      const qs = shuffle(POOL.slice()); // mezcla preguntas
+      const picked = qs.slice(0, total).map(q=>{
+        const opts = q.a.map((txt, i)=>({txt, i}));
+        shuffle(opts);
+        const newC = opts.findIndex(o => o.i === q.c);
+        return {cat:q.cat, q:q.q, opts: opts.map(o=>o.txt), c:newC};
+      });
+      return picked;
+    }
+
+    /***********************
+     *  Render Start (misma interfaz + checkbox rachas)
+     ***********************/
+    function renderStart(){
+      panel.innerHTML = `
+        <div class="center">
+          <div class="big">Modo Kahoot: <span style="background:linear-gradient(90deg,#2ee59d,#4d7cff,#ff3d8d); -webkit-background-clip:text; background-clip:text; color:transparent;">RA4</span></div>
+          <p class="lead">
+            Preguntas y respuestas en <b>orden aleatorio</b>. Sin esperas: respondes → feedback → siguiente.
+            <br/>Atajos: <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span> para responder.
+          </p>
+
+          <div class="grid2">
+            <div class="set">
+              <label for="count">Número de preguntas (pool = 50)</label>
+              <select id="count">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+              </select>
+              <div class="sub">Cada partida baraja el orden y las opciones.</div>
+            </div>
+
+            <div class="set">
+              <label>Modo rachas</label>
+              <div class="toggle" title="Activado: bonus por racha y (si hay) tiempo. Desactivado: cada acierto +100 exactos.">
+                <input id="streakMode" type="checkbox" checked />
+                <span>Activar rachas (bonus)</span>
+              </div>
+
+              <label>Temporizador (opcional)</label>
+              <div class="toggle">
+                <input id="timer" type="checkbox" />
+                <span>Activar</span>
+              </div>
+              <label for="secs">Segundos por pregunta</label>
+              <input id="secs" type="number" min="5" max="30" step="1" value="12" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:6px">
+            <button class="btn primary" id="startBtn">▶ Empezar</button>
+            <button class="btn" id="mixBtn" title="Solo un guiño visual">🎲 Mezcla visual</button>
+          </div>
+
+          <p class="lead">
+            Música: botón <b>♪ Música</b>. Si no suena, añade un <span class="kbd">music.mp3</span> junto al HTML.
+          </p>
+        </div>
+      `;
+
+      $("#startBtn").onclick = ()=>{
+        const total = parseInt($("#count").value,10);
+        const timerOn = $("#timer").checked;
+        const secs = clamp(parseInt($("#secs").value,10) || 12, 5, 30);
+        const streakMode = $("#streakMode").checked;
+        start(total, timerOn, secs, streakMode);
+      };
+      $("#mixBtn").onclick = ()=>toast("✅ Aleatoriedad lista: preguntas y respuestas se barajan al empezar.");
+    }
+
+    /***********************
+     *  Inicio / Fin (misma interfaz + % real)
+     ***********************/
+    function start(total, timerOn, secs, streakMode){
+      state.started = true;
+      state.total = total;
+      state.timerOn = timerOn;
+      state.timePerQ = secs;
+      state.streakMode = streakMode; // ✅ NUEVO
+      state.idx = 0;
+      state.score = 0;
+      state.streak = 0;
+      state.correct = 0; // ✅ NUEVO
+      scoreEl.textContent = "0";
+      streakEl.textContent = "0";
+      state.questions = buildRun(total);
+      setBar();
+      renderQuestion();
+      toast("¡A por ello!");
+    }
+
+    function finish(){
+      clearInterval(state.tickId);
+      const pct = Math.round((state.correct / state.total) * 100); // ✅ NUEVO: porcentaje real
+      panel.innerHTML = `
+        <div class="center">
+          <div class="big">🏁 Fin</div>
+          <p class="lead">Puntuación total: <b style="color:var(--good)">${state.score}</b> puntos</p>
+          <div class="card" style="text-align:left">
+            <div class="qhead">
+              <div class="qmeta">
+                <span class="tag">Preguntas: ${state.total}</span>
+                <span class="tag">Aciertos: ${state.correct}</span>
+                <span class="tag">Acierto: ${pct}%</span>
+              </div>
+            </div>
+            <p class="sub">Modo rachas: <b>${state.streakMode ? "ON (bonus)" : "OFF (+100 fijo)"}</b></p>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn primary" id="againBtn">↻ Otra partida</button>
+            <button class="btn" id="reviewBtn">📚 Ver pool (50)</button>
+          </div>
+        </div>
+      `;
+      $("#againBtn").onclick = ()=> reset();
+      $("#reviewBtn").onclick = ()=> renderPool();
+    }
+
+    function renderPool(){
+      const items = POOL.map((x,i)=>`
+        <div class="set">
+          <div class="tag">#${String(i+1).padStart(2,"0")} • ${x.cat}</div>
+          <div style="font-weight:950">${x.q}</div>
+        </div>
+      `).join("");
+      panel.innerHTML = `
+        <div class="center" style="text-align:left">
+          <div class="big" style="text-align:center">Pool completo (50)</div>
+          <p class="lead" style="text-align:center">Solo para revisar el temario. En partida se barajan preguntas y respuestas.</p>
+          <div class="grid2">${items}</div>
+          <div style="display:flex; justify-content:center; margin-top:10px">
+            <button class="btn primary" id="backBtn">← Volver</button>
+          </div>
+        </div>
+      `;
+      $("#backBtn").onclick = ()=> reset();
+    }
+
+    /***********************
+     *  Preguntas
+     ***********************/
+    function renderQuestion(){
+      clearInterval(state.tickId);
+      state.tickId = null;
+
+      if(state.idx >= state.total){ finish(); return; }
+
+      const item = state.questions[state.idx];
+      const n = state.idx + 1;
+
+      let timerHtml = "";
+      if(state.timerOn){
+        state.timeLeft = state.timePerQ;
+        timerHtml = `<span class="tag">⏱ <b id="tleft">${state.timeLeft}</b>s</span>`;
+      }
+
+      panel.innerHTML = `
+        <div class="card" id="card">
+          <div class="qhead">
+            <div class="qmeta">
+              <span class="tag">Pregunta ${n}/${state.total}</span>
+              <span class="tag">${item.cat}</span>
+              ${timerHtml}
+              <span class="tag">Rachas: <b>${state.streakMode ? "ON" : "OFF"}</b></span>
+            </div>
+            <div class="tag">🎯 +100 base</div>
+          </div>
+
+          <p class="question">${item.q}</p>
+          <p class="sub">Elige una opción (o usa 1–4). Respuesta inmediata.</p>
+
+          <div class="answers" id="answers">
+            ${item.opts.map((t,i)=>`
+              <div class="opt" data-i="${i}" role="button" tabindex="0" aria-label="Opción ${i+1}">
+                <div class="badge ${["c1","c2","c3","c4"][i]}">${i+1}</div>
+                <div>${t}</div>
+              </div>
+            `).join("")}
+          </div>
+
+          <div class="footerRow">
+            <div class="mini">
+              <span>Progreso</span>
+              <span class="kbd">${n}/${state.total}</span>
+              <span style="opacity:.6">•</span>
+              <span>Tip: si dudas, piensa en el objetivo real de cada concepto.</span>
+            </div>
+            <div class="mini">
+              <span class="tag">Puntos: <b id="score2">${state.score}</b></span>
+              <span class="tag">Racha: <b id="streak2">${state.streak}</b></span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const ans = $("#answers");
+      const onPick = (i)=> handleAnswer(i);
+
+      ans.querySelectorAll(".opt").forEach(el=>{
+        el.addEventListener("click", ()=>onPick(parseInt(el.dataset.i,10)));
+        el.addEventListener("keydown", (e)=>{
+          if(e.key==="Enter" || e.key===" "){
+            e.preventDefault();
+            onPick(parseInt(el.dataset.i,10));
+          }
+        });
+      });
+
+      window.onkeydown = (e)=>{
+        if(!state.started) return;
+        const k = e.key;
+        if(k>="1" && k<="4"){
+          const i = parseInt(k,10)-1;
+          if(i>=0 && i<4) onPick(i);
+        }
+      };
+
+      if(state.timerOn){
+        const tEl = $("#tleft");
+        state.tickId = setInterval(()=>{
+          state.timeLeft--;
+          if(tEl) tEl.textContent = state.timeLeft;
+          if(state.timeLeft <= 0){
+            clearInterval(state.tickId);
+            state.tickId = null;
+            handleAnswer(-1, true);
+          }
+        }, 1000);
+      }
+
+      setBar();
+    }
+
+    function handleAnswer(choice, isTimeout=false){
+      clearInterval(state.tickId);
+      state.tickId = null;
+
+      const item = state.questions[state.idx];
+      const correct = item.c;
+      const card = $("#card");
+      const opts = [...document.querySelectorAll(".opt")];
+
+      if(opts.some(o=>o.classList.contains("correct") || o.classList.contains("wrong"))) return;
+
+      opts.forEach((o, i)=>{
+        if(i === correct) o.classList.add("correct");
+        if(choice === i && i !== correct) o.classList.add("wrong");
+        if(choice !== i && i !== correct) o.classList.add("dim");
+      });
+
+      let gained = 0;
+
+      if(choice === correct){
+        state.correct++; // ✅ NUEVO: contar acierto
+
+        if(state.streakMode){
+          state.streak++;
+          gained = 100 + Math.min(60, state.streak*6);
+          if(state.timerOn) gained += Math.max(0, (state.timeLeft|0) * 3);
+        } else {
+          // OFF: +100 fijo siempre y sin racha
+          state.streak = 0;
+          gained = 100;
+        }
+
+        state.score += gained;
+        beep("good");
+        streakEl.textContent = String(state.streak);
+        scoreEl.textContent = String(state.score);
+        $("#score2").textContent = String(state.score);
+        $("#streak2").textContent = String(state.streak);
+
+        const r = opts[correct].getBoundingClientRect();
+        confetti.burst(r.left + r.width/2, r.top + r.height/2);
+        toast(`✅ Correcto +${gained}`);
+      } else {
+        state.streak = 0;
+        streakEl.textContent = "0";
+        $("#streak2").textContent = "0";
+        beep("bad");
+        card.classList.add("shake");
+        toast(isTimeout ? "⏰ Tiempo!" : "❌ Incorrecto");
+      }
+
+      setTimeout(()=>{
+        state.idx++;
+        renderQuestion();
+      }, 450);
+    }
+
+    /***********************
+     *  Música botón
+     ***********************/
+    let musicOn = false;
+    $("#musicBtn").onclick = async ()=>{
+      try{
+        if(!musicOn){
+          await bgm.play();
+          musicOn = true;
+          toast("♪ Música ON");
+          $("#musicBtn").classList.add("primary");
+        } else {
+          bgm.pause();
+          musicOn = false;
+          toast("♪ Música OFF");
+          $("#musicBtn").classList.remove("primary");
+        }
+      }catch(e){
+        toast("No se pudo reproducir. Añade music.mp3 junto al HTML.");
+      }
+    };
+
+    $("#restartBtn").onclick = ()=> reset();
+
+    // Iniciar
+    reset();
+  </script>
+</body>
+</html>
