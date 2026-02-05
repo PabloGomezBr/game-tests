@@ -1,738 +1,1083 @@
 <!doctype html>
 <html lang="ca">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Catàleg de Jocs • SMX</title>
-  <style>
-    :root{
-      --bg1:#0b1020;
-      --bg2:#111b3a;
-      --card:#0f1733cc;
-      --stroke:#2b3a7a;
-      --text:#eaf1ff;
-      --muted:#a9b7e6;
-      --good:#2ee59d;
-      --bad:#ff4d6d;
-      --warn:#ffd166;
-      --shadow: 0 14px 40px rgba(0,0,0,.35);
-      --radius: 18px;
-      --speed: 160ms;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:var(--text);
-      overflow-x:hidden;
-      background:
-        radial-gradient(1200px 800px at 15% 20%, rgba(77,124,255,.35), transparent 60%),
-        radial-gradient(900px 700px at 80% 35%, rgba(255,61,141,.25), transparent 60%),
-        radial-gradient(1000px 800px at 50% 90%, rgba(46,229,157,.18), transparent 65%),
-        linear-gradient(135deg, var(--bg1), var(--bg2));
-      position:relative;
-    }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Catàleg de Jocs • SMX</title>
+    <style>
+      :root {
+        --bg1: #0b1020;
+        --bg2: #111b3a;
+        --card: #0f1733cc;
+        --stroke: #2b3a7a;
+        --text: #eaf1ff;
+        --muted: #a9b7e6;
+        --good: #2ee59d;
+        --bad: #ff4d6d;
+        --warn: #ffd166;
+        --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+        --radius: 18px;
+        --speed: 160ms;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        color: var(--text);
+        overflow-x: hidden;
+        background:
+          radial-gradient(
+            1200px 800px at 15% 20%,
+            rgba(77, 124, 255, 0.35),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 700px at 80% 35%,
+            rgba(255, 61, 141, 0.25),
+            transparent 60%
+          ),
+          radial-gradient(
+            1000px 800px at 50% 90%,
+            rgba(46, 229, 157, 0.18),
+            transparent 65%
+          ),
+          linear-gradient(135deg, var(--bg1), var(--bg2));
+        position: relative;
+      }
 
-    /* Animated background grid */
-    .grid{
-      position:fixed; inset:0;
-      background-image:
-        linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);
-      background-size: 64px 64px;
-      mask-image: radial-gradient(760px 520px at 50% 20%, black 30%, transparent 78%);
-      opacity:.7;
-      pointer-events:none;
-      animation: drift 9s linear infinite;
-    }
-    @keyframes drift{
-      0%{transform:translate3d(0,0,0)}
-      100%{transform:translate3d(-64px,-64px,0)}
-    }
+      /* Animated background grid */
+      .grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          );
+        background-size: 64px 64px;
+        mask-image: radial-gradient(
+          760px 520px at 50% 20%,
+          black 30%,
+          transparent 78%
+        );
+        opacity: 0.7;
+        pointer-events: none;
+        animation: drift 9s linear infinite;
+      }
+      @keyframes drift {
+        0% {
+          transform: translate3d(0, 0, 0);
+        }
+        100% {
+          transform: translate3d(-64px, -64px, 0);
+        }
+      }
 
-    .wrap{
-      min-height:100%;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      padding:22px 14px 30px;
-      position:relative;
-      z-index:1;
-    }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 22px 14px 30px;
+        position: relative;
+        z-index: 1;
+      }
 
-    .app{
-      width:min(1100px, 100%);
-      display:grid;
-      gap:14px;
-    }
+      .app {
+        width: min(1100px, 100%);
+        display: grid;
+        gap: 14px;
+      }
 
-    header{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      padding:14px 16px;
-      border:1px solid rgba(255,255,255,.10);
-      background:linear-gradient(180deg, rgba(15,23,51,.82), rgba(15,23,51,.52));
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      position:sticky;
-      top:14px;
-      z-index:2;
-    }
-    .brand{
-      display:flex; align-items:center; gap:12px;
-      min-width:0;
-    }
-    .logo{
-      width:44px; height:44px;
-      border-radius:14px;
-      background:
-        radial-gradient(18px 18px at 30% 35%, rgba(255,255,255,.65), transparent 60%),
-        linear-gradient(135deg, rgba(77,124,255,.95), rgba(255,61,141,.95));
-      box-shadow: 0 10px 20px rgba(0,0,0,.35);
-      position:relative;
-      overflow:hidden;
-    }
-    .logo:after{
-      content:"";
-      position:absolute; inset:-30%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-      transform: rotate(25deg);
-      animation: shine 3.2s ease-in-out infinite;
-    }
-    @keyframes shine{
-      0%,55%{transform:translateX(-60%) rotate(25deg)}
-      100%{transform:translateX(60%) rotate(25deg)}
-    }
+      header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(
+          180deg,
+          rgba(15, 23, 51, 0.82),
+          rgba(15, 23, 51, 0.52)
+        );
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 14px;
+        z-index: 2;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background:
+          radial-gradient(
+            18px 18px at 30% 35%,
+            rgba(255, 255, 255, 0.65),
+            transparent 60%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(77, 124, 255, 0.95),
+            rgba(255, 61, 141, 0.95)
+          );
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+        position: relative;
+        overflow: hidden;
+      }
+      .logo:after {
+        content: "";
+        position: absolute;
+        inset: -30%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.35),
+          transparent
+        );
+        transform: rotate(25deg);
+        animation: shine 3.2s ease-in-out infinite;
+      }
+      @keyframes shine {
+        0%,
+        55% {
+          transform: translateX(-60%) rotate(25deg);
+        }
+        100% {
+          transform: translateX(60%) rotate(25deg);
+        }
+      }
 
-    .title{
-      display:flex; flex-direction:column;
-      line-height:1.1;
-      min-width:0;
-    }
-    .title b{font-size:14px; letter-spacing:.2px}
-    .title span{font-size:12px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+      .title {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+        min-width: 0;
+      }
+      .title b {
+        font-size: 14px;
+        letter-spacing: 0.2px;
+      }
+      .title span {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .hud{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color:var(--text);
-      font-size:12px;
-      user-select:none;
-    }
-    .pill strong{font-variant-numeric: tabular-nums}
+      .hud {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        font-size: 12px;
+        user-select: none;
+      }
+      .pill strong {
+        font-variant-numeric: tabular-nums;
+      }
 
-    .btn{
-      cursor:pointer;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      padding:9px 12px;
-      border-radius:12px;
-      font-weight:800;
-      font-size:12px;
-      transition: transform var(--speed) ease, background var(--speed) ease, border-color var(--speed) ease;
-      user-select:none;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      justify-content:center;
-      white-space:nowrap;
-    }
-    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24)}
-    .btn:active{transform: translateY(0px) scale(.99)}
-    .btn.primary{
-      border-color: rgba(77,124,255,.45);
-      background: linear-gradient(135deg, rgba(77,124,255,.35), rgba(124,77,255,.28));
-    }
-    .btn.ghost{ background: rgba(0,0,0,.10); }
-    .btn.small{ padding:7px 10px; border-radius:10px; font-weight:850; }
+      .btn {
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 9px 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 12px;
+        transition:
+          transform var(--speed) ease,
+          background var(--speed) ease,
+          border-color var(--speed) ease;
+        user-select: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.24);
+      }
+      .btn:active {
+        transform: translateY(0px) scale(0.99);
+      }
+      .btn.primary {
+        border-color: rgba(77, 124, 255, 0.45);
+        background: linear-gradient(
+          135deg,
+          rgba(77, 124, 255, 0.35),
+          rgba(124, 77, 255, 0.28)
+        );
+      }
+      .btn.ghost {
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .btn.small {
+        padding: 7px 10px;
+        border-radius: 10px;
+        font-weight: 850;
+      }
 
-    .stage{
-      border:1px solid rgba(255,255,255,.10);
-      background:linear-gradient(180deg, rgba(15,23,51,.80), rgba(15,23,51,.45));
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      overflow:hidden;
-      position:relative;
-    }
-    .panel{ padding:16px; display:grid; gap:14px; }
+      .stage {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(
+          180deg,
+          rgba(15, 23, 51, 0.8),
+          rgba(15, 23, 51, 0.45)
+        );
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        overflow: hidden;
+        position: relative;
+      }
+      .panel {
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+      }
 
-    .heroTitle{
-      margin:0;
-      font-size:26px;
-      font-weight:1000;
-      letter-spacing:.2px;
-      line-height:1.15;
-    }
-    .heroSub{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.45;
-      max-width:82ch;
-    }
+      .heroTitle {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 1000;
+        letter-spacing: 0.2px;
+        line-height: 1.15;
+      }
+      .heroSub {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+        max-width: 82ch;
+      }
 
-    .tools{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-      margin-top:10px;
-      padding:12px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.10);
-    }
-    .leftTools{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      flex:1 1 auto;
-      min-width:260px;
-    }
-    .field{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-    }
-    .field input{
-      border:none;
-      outline:none;
-      background:transparent;
-      color:var(--text);
-      font-weight:800;
-      min-width:220px;
-    }
-    .field input::placeholder{color:rgba(169,183,230,.75); font-weight:700}
-    .tag{
-      font-size:11px;
-      color:var(--muted);
-      padding:6px 9px;
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:999px;
-      background: rgba(255,255,255,.04);
-      white-space:nowrap;
-    }
+      .tools {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+        padding: 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .leftTools {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        flex: 1 1 auto;
+        min-width: 260px;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .field input {
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--text);
+        font-weight: 800;
+        min-width: 220px;
+      }
+      .field input::placeholder {
+        color: rgba(169, 183, 230, 0.75);
+        font-weight: 700;
+      }
+      .tag {
+        font-size: 11px;
+        color: var(--muted);
+        padding: 6px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        white-space: nowrap;
+      }
 
-    /* Accordions via <details> */
-    details{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.10);
-      border-radius:16px;
-      overflow:hidden;
-    }
-    summary{
-      list-style:none;
-      cursor:pointer;
-      user-select:none;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:14px 14px;
-      font-weight:950;
-    }
-    summary::-webkit-details-marker{display:none}
-    .sumLeft{display:flex; align-items:center; gap:10px; min-width:0}
-    .chev{
-      width:28px; height:28px;
-      border-radius:12px;
-      display:grid;
-      place-items:center;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      transition: transform 180ms ease;
-      flex:0 0 auto;
-    }
-    details[open] .chev{transform: rotate(90deg)}
-    .sumTitle{min-width:0}
-    .sumTitle .name{font-size:14px; letter-spacing:.2px}
-    .sumTitle .desc{font-size:12px; color:var(--muted); font-weight:700; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-    .sumRight{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end}
-    .content{
-      padding:0 14px 14px;
-      display:grid;
-      gap:12px;
-    }
+      /* Accordions via <details> */
+      details {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 14px;
+        font-weight: 950;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      .sumLeft {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .chev {
+        width: 28px;
+        height: 28px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 180ms ease;
+        flex: 0 0 auto;
+      }
+      details[open] .chev {
+        transform: rotate(90deg);
+      }
+      .sumTitle {
+        min-width: 0;
+      }
+      .sumTitle .name {
+        font-size: 14px;
+        letter-spacing: 0.2px;
+      }
+      .sumTitle .desc {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 700;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sumRight {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .content {
+        padding: 0 14px 14px;
+        display: grid;
+        gap: 12px;
+      }
 
-    /* Nested lists / “cards” */
-    .grid2{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap:12px;
-    }
-    @media (max-width:860px){ .grid2{grid-template-columns:1fr} }
+      /* Nested lists / “cards” */
+      .grid2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      @media (max-width: 860px) {
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    .card{
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      background: rgba(255,255,255,.04);
-      padding:12px;
-      display:grid;
-      gap:8px;
-      animation: pop .22s ease-out;
-      transform-origin:center;
-    }
-    @keyframes pop{
-      from{transform: translateY(6px) scale(.985); opacity:.0}
-      to{transform: translateY(0) scale(1); opacity:1}
-    }
-    .cardHead{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .cardTitle{
-      margin:0;
-      font-size:14px;
-      font-weight:950;
-      letter-spacing:.2px;
-      line-height:1.25;
-    }
-    .cardText{
-      margin:0;
-      color:var(--muted);
-      font-size:12.5px;
-      line-height:1.5;
-    }
-    .chipRow{display:flex; gap:8px; flex-wrap:wrap}
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+        animation: pop 0.22s ease-out;
+        transform-origin: center;
+      }
+      @keyframes pop {
+        from {
+          transform: translateY(6px) scale(0.985);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+      .cardHead {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .cardTitle {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 950;
+        letter-spacing: 0.2px;
+        line-height: 1.25;
+      }
+      .cardText {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      .chipRow {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
 
-    /* Breadcrumb */
-    .crumbs{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      padding:10px 12px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.10);
-    }
-    .crumb{
-      display:flex; align-items:center; gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      color:var(--text);
-      font-size:12px;
-      font-weight:900;
-      user-select:none;
-    }
-    .sep{opacity:.55}
-    .crumb small{color:var(--muted); font-weight:800}
+      /* Breadcrumb */
+      .crumbs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .crumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 900;
+        user-select: none;
+      }
+      .sep {
+        opacity: 0.55;
+      }
+      .crumb small {
+        color: var(--muted);
+        font-weight: 800;
+      }
 
-    /* Toast */
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%);
-      background: rgba(0,0,0,.55);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius: 999px;
-      padding:10px 14px;
-      color:var(--text);
-      font-size:12px;
-      z-index: 5;
-      opacity:0;
-      pointer-events:none;
-      transition: opacity 140ms ease, transform 140ms ease;
-      backdrop-filter: blur(10px);
-    }
-    .toast.on{
-      opacity:1;
-      transform: translateX(-50%) translateY(-2px);
-    }
+      /* Toast */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 10px 14px;
+        color: var(--text);
+        font-size: 12px;
+        z-index: 5;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 140ms ease,
+          transform 140ms ease;
+        backdrop-filter: blur(10px);
+      }
+      .toast.on {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-2px);
+      }
 
-    /* Highlight search hits */
-    mark{
-      background: rgba(46,229,157,.18);
-      color: var(--text);
-      padding:0 4px;
-      border-radius:6px;
-      border:1px solid rgba(46,229,157,.20);
-    }
-  </style>
-</head>
-<body>
-  <div class="grid"></div>
-  <div class="toast" id="toast"></div>
+      /* Highlight search hits */
+      mark {
+        background: rgba(46, 229, 157, 0.18);
+        color: var(--text);
+        padding: 0 4px;
+        border-radius: 6px;
+        border: 1px solid rgba(46, 229, 157, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+    <div class="toast" id="toast"></div>
 
-  <div class="wrap">
-    <div class="app">
-      <header>
-        <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
-          <div class="title">
-            <b>Catàleg de Jocs i Qüestionaris</b>
-            <span>Organitzat per curs → mòdul → tema/RA (UIX friendly)</span>
+    <div class="wrap">
+      <div class="app">
+        <header>
+          <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div class="title">
+              <b>Catàleg de Jocs i Qüestionaris</b>
+              <span>Organitzat per curs → mòdul → tema/RA (UIX friendly)</span>
+            </div>
           </div>
-        </div>
 
-        <div class="hud">
-          <div class="pill">Ruta: <strong id="routeMini">Inici</strong></div>
-          <a class="btn ghost" href="#" id="helpBtn" title="Ajuda">ℹ️ Ajuda</a>
-        </div>
-      </header>
+          <div class="hud">
+            <div class="pill">Ruta: <strong id="routeMini">Inici</strong></div>
+            <a class="btn ghost" href="#" id="helpBtn" title="Ajuda"
+              >ℹ️ Ajuda</a
+            >
+          </div>
+        </header>
 
-      <section class="stage">
-        <div class="panel">
-          <div>
-            <h1 class="heroTitle">🎮 Selecciona el teu joc</h1>
-            <p class="heroSub">
-              Navega amb desplegables (acordions) o fes servir el cercador. L’estructura està preparada per
-              afegir més cursos i mòduls sense tocar el disseny.
-            </p>
+        <section class="stage">
+          <div class="panel">
+            <div>
+              <h1 class="heroTitle">🎮 Selecciona el teu joc</h1>
+              <p class="heroSub">
+                Navega amb desplegables (acordions) o fes servir el cercador.
+                L’estructura està preparada per afegir més cursos i mòduls sense
+                tocar el disseny.
+              </p>
 
-            <div class="tools">
-              <div class="leftTools">
-                <div class="field" title="Cerca per text (curs, mòdul, tema, RA)">
-                  🔎 <input id="search" type="text" placeholder="Cerca: 'SMX', 'manteniment', 'RA4'..." autocomplete="off" />
+              <div class="tools">
+                <div class="leftTools">
+                  <div
+                    class="field"
+                    title="Cerca per text (curs, mòdul, tema, RA)"
+                  >
+                    🔎
+                    <input
+                      id="search"
+                      type="text"
+                      placeholder="Cerca: 'SMX', 'manteniment', 'RA4'..."
+                      autocomplete="off"
+                    />
+                  </div>
+                  <span class="tag">Tip: escriu “RA4”</span>
                 </div>
-                <span class="tag">Tip: escriu “RA4”</span>
+                <div
+                  style="
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                  "
+                >
+                  <button class="btn small" id="expandAll">▾ Obrir tot</button>
+                  <button class="btn small" id="collapseAll">
+                    ▸ Tancar tot
+                  </button>
+                </div>
               </div>
-              <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
-                <button class="btn small" id="expandAll">▾ Obrir tot</button>
-                <button class="btn small" id="collapseAll">▸ Tancar tot</button>
+
+              <div class="crumbs" aria-label="Ruta de navegació">
+                <span class="crumb">Inici <small>catàleg</small></span>
+                <span class="sep">→</span>
+                <span class="crumb" id="crumb1">1r SMX</span>
+                <span class="sep">→</span>
+                <span class="crumb" id="crumb2">Muntatge i manteniment</span>
+                <span class="sep">→</span>
+                <span class="crumb" id="crumb3"
+                  >TEMA 3 - Manteniment (RA4)</span
+                >
               </div>
             </div>
 
-            <div class="crumbs" aria-label="Ruta de navegació">
-              <span class="crumb">Inici <small>catàleg</small></span>
-              <span class="sep">→</span>
-              <span class="crumb" id="crumb1">1r SMX</span>
-              <span class="sep">→</span>
-              <span class="crumb" id="crumb2">Muntatge i manteniment</span>
-              <span class="sep">→</span>
-              <span class="crumb" id="crumb3">TEMA 3 - Manteniment (RA4)</span>
+            <!-- ✅ ESTRUCTURA PER CURSOS -->
+            <div id="catalog">
+              <!-- CURS: 1r SMX -->
+              <details data-level="course" open>
+                <summary data-route="1r SMX">
+                  <div class="sumLeft">
+                    <div class="chev">▶</div>
+                    <div class="sumTitle">
+                      <div class="name">1r SMX</div>
+                      <div class="desc">
+                        Sistemes microinformàtics i xarxes • Catàleg de mòduls
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sumRight">
+                    <span class="tag">Curs</span>
+                    <span class="tag">HTML5</span>
+                  </div>
+                </summary>
+
+                <div class="content">
+                  <!-- MÒDUL: Muntatge i manteniment -->
+                  <details data-level="module" open>
+                    <summary data-route="1r SMX → Muntatge i manteniment">
+                      <div class="sumLeft">
+                        <div class="chev">▶</div>
+                        <div class="sumTitle">
+                          <div class="name">Muntatge i manteniment</div>
+                          <div class="desc">
+                            Diagnosi • BIOS/UEFI • POST • Eines • Procediments
+                          </div>
+                        </div>
+                      </div>
+                      <div class="sumRight">
+                        <span class="tag">Mòdul</span>
+                        <span class="tag">Jocs: 1</span>
+                      </div>
+                    </summary>
+
+                    <div class="content">
+                      <div class="grid2">
+                        <!-- JOC: Tema 3 RA4 -->
+                        <div
+                          class="card"
+                          data-route="1r SMX → Muntatge i manteniment → TEMA 3 - Manteniment (RA4)"
+                        >
+                          <div class="cardHead">
+                            <div>
+                              <h3 class="cardTitle">
+                                TEMA 3 - Manteniment (RA4)
+                              </h3>
+                              <p class="cardText">
+                                Qüestionari tipus Kahoot (pool 50) amb ordre
+                                aleatori sempre. Mode ratxes ON/OFF i
+                                percentatge d’encerts al final.
+                              </p>
+                            </div>
+                            <span class="tag">Disponible</span>
+                          </div>
+                          <div class="chipRow">
+                            <span class="tag">Pool: 50</span>
+                            <span class="tag">Aleatori</span>
+                            <span class="tag">Ratxes</span>
+                            <span class="tag">% encerts</span>
+                            <span class="tag">Música opcional</span>
+                          </div>
+                          <!-- 🔧 CANVIA L'ENLLAÇ AL NOM REAL DEL FITXER DEL JOC -->
+                          <a
+                            class="btn primary"
+                            href="./Muntatge i manteniment d'equips/TEMA 3 - Manteniment (RA4)/tema3.html"
+                            data-game="ra4"
+                          >
+                            ▶ Obrir joc
+                          </a>
+                        </div>
+
+                        <!-- Placeholder de futurs temes -->
+                        <div class="card" style="opacity: 0.75">
+                          <div class="cardHead">
+                            <div>
+                              <h3 class="cardTitle">
+                                Altres temes (properament)
+                              </h3>
+                              <p class="cardText">
+                                Afegeix més jocs duplicant una targeta i
+                                canviant el títol, etiquetes i enllaç.
+                              </p>
+                            </div>
+                            <span class="tag">En preparació</span>
+                          </div>
+                          <div class="chipRow">
+                            <span class="tag">TEMA 1</span>
+                            <span class="tag">TEMA 2</span>
+                            <span class="tag">RA?</span>
+                          </div>
+                          <button class="btn ghost" type="button" id="addHint">
+                            ➕ Com afegir
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  <!-- MÒDUL: Aplicacions Ofimàtiques -->
+                  <details data-level="module" open>
+                    <summary data-route="1r SMX → Aplicacions Ofimàtiques">
+                      <div class="sumLeft">
+                        <div class="chev">▶</div>
+                        <div class="sumTitle">
+                          <div class="name">Aplicacions Ofimàtiques</div>
+                          <div class="desc">
+                            Models Entitat / Relacio • Taules • SQL
+                          </div>
+                        </div>
+                      </div>
+                      <div class="sumRight">
+                        <span class="tag">Mòdul</span>
+                        <span class="tag">Jocs: 1</span>
+                      </div>
+                    </summary>
+
+                    <div class="content">
+                      <div class="grid2">
+                        <!-- JOC: Tema 4 RA4 -->
+                        <div
+                          class="card"
+                          data-route="1r SMX → Aplicacions Ofimàtiques → TEMA 4 - Base de dades (RA4)"
+                        >
+                          <div class="cardHead">
+                            <div>
+                              <h3 class="cardTitle">
+                                TEMA 4 - Base de dades (RA4)
+                              </h3>
+                              <p class="cardText">
+                                Qüestionari tipus Kahoot (pool 50) amb ordre
+                                aleatori sempre. Mode ratxes ON/OFF i
+                                percentatge d’encerts al final.
+                              </p>
+                            </div>
+                            <span class="tag">Disponible</span>
+                          </div>
+                          <div class="chipRow">
+                            <span class="tag">Pool: 50</span>
+                            <span class="tag">Aleatori</span>
+                            <span class="tag">Ratxes</span>
+                            <span class="tag">% encerts</span>
+                            <span class="tag">Música opcional</span>
+                          </div>
+                          <!-- 🔧 CANVIA L'ENLLAÇ AL NOM REAL DEL FITXER DEL JOC -->
+                          <a
+                            class="btn primary"
+                            href="./Aplicacions ofimàtiques/TEMA 4 - Base de dades (RA4)/tema4.html"
+                            data-game="ra4"
+                          >
+                            ▶ Obrir joc
+                          </a>
+                        </div>
+
+                        <!-- Placeholder de futurs temes -->
+                        <div class="card" style="opacity: 0.75">
+                          <div class="cardHead">
+                            <div>
+                              <h3 class="cardTitle">
+                                Altres temes (properament)
+                              </h3>
+                              <p class="cardText">
+                                Afegeix més jocs duplicant una targeta i
+                                canviant el títol, etiquetes i enllaç.
+                              </p>
+                            </div>
+                            <span class="tag">En preparació</span>
+                          </div>
+                          <div class="chipRow">
+                            <span class="tag">TEMA 1</span>
+                            <span class="tag">TEMA 2</span>
+                            <span class="tag">RA?</span>
+                          </div>
+                          <button class="btn ghost" type="button" id="addHint">
+                            ➕ Com afegir
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  <!-- Placeholder per altres mòduls del mateix curs -->
+                  <details data-level="module">
+                    <summary data-route="1r SMX → (Altres mòduls)">
+                      <div class="sumLeft">
+                        <div class="chev">▶</div>
+                        <div class="sumTitle">
+                          <div class="name">
+                            Altres mòduls (estructura preparada)
+                          </div>
+                          <div class="desc">
+                            Afegeix aquí Xarxes, Sistemes operatius, Ofimàtica,
+                            etc.
+                          </div>
+                        </div>
+                      </div>
+                      <div class="sumRight">
+                        <span class="tag">Plantilla</span>
+                        <span class="tag">0 jocs</span>
+                      </div>
+                    </summary>
+                    <div class="content">
+                      <div class="card">
+                        <h3 class="cardTitle">Com ampliar el catàleg</h3>
+                        <p class="cardText">
+                          1) Duplica un bloc <span class="tag">MÒDUL</span> amb
+                          <code
+                            style="
+                              color: #eaf1ff;
+                              background: rgba(255, 255, 255, 0.06);
+                              padding: 2px 6px;
+                              border-radius: 8px;
+                              border: 1px solid rgba(255, 255, 255, 0.1);
+                            "
+                            >details</code
+                          ><br />
+                          2) Dins, afegeix targetes de joc amb enllaç al teu
+                          fitxer HTML.<br />
+                          3) El cercador i la ruta funcionen automàticament.
+                        </p>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              </details>
+
+              <!-- Placeholder: 2n SMX (si vols més endavant) -->
+              <details data-level="course">
+                <summary data-route="2n SMX">
+                  <div class="sumLeft">
+                    <div class="chev">▶</div>
+                    <div class="sumTitle">
+                      <div class="name">2n SMX</div>
+                      <div class="desc">
+                        Reservat per futurs jocs (estructura a punt)
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sumRight">
+                    <span class="tag">Curs</span>
+                    <span class="tag">0 jocs</span>
+                  </div>
+                </summary>
+                <div class="content">
+                  <div class="card">
+                    <h3 class="cardTitle">Encara no hi ha jocs</h3>
+                    <p class="cardText">
+                      Quan n’afegeixis, segueix el mateix patró: curs → mòdul →
+                      tema/RA → joc.
+                    </p>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <div class="tag" id="resultsTag" style="width: fit-content">
+              Mostrant: tot
             </div>
           </div>
-
-          <!-- ✅ ESTRUCTURA PER CURSOS -->
-          <div id="catalog">
-
-            <!-- CURS: 1r SMX -->
-            <details data-level="course" open>
-              <summary data-route="1r SMX">
-                <div class="sumLeft">
-                  <div class="chev">▶</div>
-                  <div class="sumTitle">
-                    <div class="name">1r SMX</div>
-                    <div class="desc">Sistemes microinformàtics i xarxes • Catàleg de mòduls</div>
-                  </div>
-                </div>
-                <div class="sumRight">
-                  <span class="tag">Curs</span>
-                  <span class="tag">HTML5</span>
-                </div>
-              </summary>
-
-              <div class="content">
-
-                <!-- MÒDUL: Muntatge i manteniment -->
-                <details data-level="module" open>
-                  <summary data-route="1r SMX → Muntatge i manteniment">
-                    <div class="sumLeft">
-                      <div class="chev">▶</div>
-                      <div class="sumTitle">
-                        <div class="name">Muntatge i manteniment</div>
-                        <div class="desc">Diagnosi • BIOS/UEFI • POST • Eines • Procediments</div>
-                      </div>
-                    </div>
-                    <div class="sumRight">
-                      <span class="tag">Mòdul</span>
-                      <span class="tag">Jocs: 1</span>
-                    </div>
-                  </summary>
-
-                  <div class="content">
-                    <div class="grid2">
-
-                      <!-- JOC: Tema 3 RA4 -->
-                      <div class="card" data-route="1r SMX → Muntatge i manteniment → TEMA 3 - Manteniment (RA4)">
-                        <div class="cardHead">
-                          <div>
-                            <h3 class="cardTitle">TEMA 3 - Manteniment (RA4)</h3>
-                            <p class="cardText">
-                              Qüestionari tipus Kahoot (pool 50) amb ordre aleatori sempre.
-                              Mode ratxes ON/OFF i percentatge d’encerts al final.
-                            </p>
-                          </div>
-                          <span class="tag">Disponible</span>
-                        </div>
-                        <div class="chipRow">
-                          <span class="tag">Pool: 50</span>
-                          <span class="tag">Aleatori</span>
-                          <span class="tag">Ratxes</span>
-                          <span class="tag">% encerts</span>
-                          <span class="tag">Música opcional</span>
-                        </div>
-                        <!-- 🔧 CANVIA L'ENLLAÇ AL NOM REAL DEL FITXER DEL JOC -->
-                        <a class="btn primary" href="./Muntatge i manteniment d'equips/TEMA 3 - Manteniment (RA4)/tema3.html" data-game="ra4">
-                          ▶ Obrir joc
-                        </a>
-                      </div>
-
-                      <!-- Placeholder de futurs temes -->
-                      <div class="card" style="opacity:.75">
-                        <div class="cardHead">
-                          <div>
-                            <h3 class="cardTitle">Altres temes (properament)</h3>
-                            <p class="cardText">
-                              Afegeix més jocs duplicant una targeta i canviant el títol, etiquetes i enllaç.
-                            </p>
-                          </div>
-                          <span class="tag">En preparació</span>
-                        </div>
-                        <div class="chipRow">
-                          <span class="tag">TEMA 1</span>
-                          <span class="tag">TEMA 2</span>
-                          <span class="tag">RA?</span>
-                        </div>
-                        <button class="btn ghost" type="button" id="addHint">➕ Com afegir</button>
-                      </div>
-
-                    </div>
-                  </div>
-                </details>
-
-                <!-- Placeholder per altres mòduls del mateix curs -->
-                <details data-level="module">
-                  <summary data-route="1r SMX → (Altres mòduls)">
-                    <div class="sumLeft">
-                      <div class="chev">▶</div>
-                      <div class="sumTitle">
-                        <div class="name">Altres mòduls (estructura preparada)</div>
-                        <div class="desc">Afegeix aquí Xarxes, Sistemes operatius, Ofimàtica, etc.</div>
-                      </div>
-                    </div>
-                    <div class="sumRight">
-                      <span class="tag">Plantilla</span>
-                      <span class="tag">0 jocs</span>
-                    </div>
-                  </summary>
-                  <div class="content">
-                    <div class="card">
-                      <h3 class="cardTitle">Com ampliar el catàleg</h3>
-                      <p class="cardText">
-                        1) Duplica un bloc <span class="tag">MÒDUL</span> amb <code style="color:#eaf1ff;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.10)">details</code><br/>
-                        2) Dins, afegeix targetes de joc amb enllaç al teu fitxer HTML.<br/>
-                        3) El cercador i la ruta funcionen automàticament.
-                      </p>
-                    </div>
-                  </div>
-                </details>
-
-              </div>
-            </details>
-
-            <!-- Placeholder: 2n SMX (si vols més endavant) -->
-            <details data-level="course">
-              <summary data-route="2n SMX">
-                <div class="sumLeft">
-                  <div class="chev">▶</div>
-                  <div class="sumTitle">
-                    <div class="name">2n SMX</div>
-                    <div class="desc">Reservat per futurs jocs (estructura a punt)</div>
-                  </div>
-                </div>
-                <div class="sumRight">
-                  <span class="tag">Curs</span>
-                  <span class="tag">0 jocs</span>
-                </div>
-              </summary>
-              <div class="content">
-                <div class="card">
-                  <h3 class="cardTitle">Encara no hi ha jocs</h3>
-                  <p class="cardText">Quan n’afegeixis, segueix el mateix patró: curs → mòdul → tema/RA → joc.</p>
-                </div>
-              </div>
-            </details>
-
-          </div>
-
-          <div class="tag" id="resultsTag" style="width:fit-content">Mostrant: tot</div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
-  </div>
 
-  <script>
-    const toastEl = document.getElementById("toast");
-    const searchEl = document.getElementById("search");
-    const routeMini = document.getElementById("routeMini");
-    const resultsTag = document.getElementById("resultsTag");
+    <script>
+      const toastEl = document.getElementById("toast");
+      const searchEl = document.getElementById("search");
+      const routeMini = document.getElementById("routeMini");
+      const resultsTag = document.getElementById("resultsTag");
 
-    function toast(msg){
-      toastEl.textContent = msg;
-      toastEl.classList.add("on");
-      clearTimeout(toastEl._t);
-      toastEl._t = setTimeout(()=>toastEl.classList.remove("on"), 1200);
-    }
+      function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("on");
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => toastEl.classList.remove("on"), 1200);
+      }
 
-    // Expand/collapse all
-    const allDetails = () => Array.from(document.querySelectorAll("details"));
-    document.getElementById("expandAll").addEventListener("click", ()=>{
-      allDetails().forEach(d=>d.open=true);
-      toast("Tot obert");
-    });
-    document.getElementById("collapseAll").addEventListener("click", ()=>{
-      allDetails().forEach(d=>d.open=false);
-      toast("Tot tancat");
-    });
-
-    // Help
-    document.getElementById("helpBtn").addEventListener("click",(e)=>{
-      e.preventDefault();
-      toast("Ruta: curs → mòdul → tema/RA. Usa el cercador per filtrar (ex.: “RA4”).");
-    });
-
-    // Add hint button
-    document.getElementById("addHint").addEventListener("click", ()=>{
-      toast("Duplica una targeta de joc i canvia títol + enllaç (href) al nou HTML.");
-    });
-
-    // Route mini on open (UIX feedback)
-    document.querySelectorAll("summary[data-route]").forEach(sum=>{
-      sum.addEventListener("click", ()=>{
-        // click happens before open toggles; delay tiny:
-        setTimeout(()=>{
-          // Build mini route from the clicked summary if it is now open or just interacted
-          const r = sum.getAttribute("data-route");
-          routeMini.textContent = r || "Inici";
-        }, 0);
+      // Expand/collapse all
+      const allDetails = () => Array.from(document.querySelectorAll("details"));
+      document.getElementById("expandAll").addEventListener("click", () => {
+        allDetails().forEach((d) => (d.open = true));
+        toast("Tot obert");
       });
-    });
-
-    // Simple, robust search filter (matches in summaries + cards)
-    function escapeHtml(s){
-      return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
-    }
-    function stripMarks(el){
-      el.querySelectorAll("mark").forEach(m=>{
-        const t = document.createTextNode(m.textContent);
-        m.replaceWith(t);
+      document.getElementById("collapseAll").addEventListener("click", () => {
+        allDetails().forEach((d) => (d.open = false));
+        toast("Tot tancat");
       });
-    }
-    function highlight(el, term){
-      stripMarks(el);
-      if(!term) return;
-      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-      const texts=[];
-      while(walk.nextNode()) texts.push(walk.currentNode);
-      const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "ig");
-      for(const node of texts){
-        const val = node.nodeValue;
-        if(!val || !re.test(val)) continue;
-        re.lastIndex = 0;
-        const frag = document.createDocumentFragment();
-        let last = 0;
-        let m;
-        while((m = re.exec(val))){
-          const a = val.slice(last, m.index);
-          if(a) frag.appendChild(document.createTextNode(a));
-          const mk = document.createElement("mark");
-          mk.textContent = val.slice(m.index, m.index+m[0].length);
-          frag.appendChild(mk);
-          last = m.index+m[0].length;
-        }
-        const b = val.slice(last);
-        if(b) frag.appendChild(document.createTextNode(b));
-        node.parentNode.replaceChild(frag, node);
-      }
-    }
 
-    function applySearch(){
-      const term = searchEl.value.trim().toLowerCase();
-      const cards = Array.from(document.querySelectorAll(".card[data-route]"));
-      const sums  = Array.from(document.querySelectorAll("summary"));
-      const courses = Array.from(document.querySelectorAll('details[data-level="course"]'));
-      const modules = Array.from(document.querySelectorAll('details[data-level="module"]'));
-
-      // Reset visibility
-      cards.forEach(c=>c.style.display="");
-      sums.forEach(s=>s.style.display="");
-      courses.forEach(d=>d.style.display="");
-      modules.forEach(d=>d.style.display="");
-
-      // Remove highlights
-      document.querySelectorAll("#catalog").forEach(root=>stripMarks(root));
-
-      if(!term){
-        resultsTag.textContent = "Mostrant: tot";
-        return;
-      }
-
-      // Filter cards by route + text content
-      let shown = 0;
-      for(const c of cards){
-        const hay = (c.getAttribute("data-route")+" "+c.textContent).toLowerCase();
-        const ok = hay.includes(term);
-        c.style.display = ok ? "" : "none";
-        if(ok){
-          shown++;
-          highlight(c, term);
-        }
-      }
-
-      // Hide empty modules/courses based on visible cards inside
-      for(const m of modules){
-        const anyVisible = Array.from(m.querySelectorAll(".card[data-route]")).some(x=>x.style.display!=="none");
-        if(!anyVisible){
-          m.style.display = "none";
-        } else {
-          m.open = true; // help user
-        }
-      }
-      for(const co of courses){
-        const anyVisible = Array.from(co.querySelectorAll('details[data-level="module"]')).some(x=>x.style.display!=="none");
-        if(!anyVisible){
-          co.style.display = "none";
-        } else {
-          co.open = true; // help user
-        }
-      }
-
-      // Highlight summaries too (optional but nice)
-      for(const s of sums){
-        const hay = s.textContent.toLowerCase();
-        if(hay.includes(term)){
-          highlight(s, term);
-        }
-      }
-
-      resultsTag.textContent = `Mostrant: ${shown} joc(s)`;
-      toast(`Filtre: “${searchEl.value.trim()}” → ${shown} resultat(s)`);
-    }
-
-    searchEl.addEventListener("input", applySearch);
-
-    // Friendly warning if game file not found (can’t truly check offline; just a hint)
-    document.querySelectorAll('a[data-game]').forEach(a=>{
-      a.addEventListener("click", ()=>{
-        toast("Si no s’obre: comprova que el fitxer existeix i està al mateix directori (href).");
+      // Help
+      document.getElementById("helpBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        toast(
+          "Ruta: curs → mòdul → tema/RA. Usa el cercador per filtrar (ex.: “RA4”).",
+        );
       });
-    });
-  </script>
-</body>
+
+      // Add hint button
+      document.getElementById("addHint").addEventListener("click", () => {
+        toast(
+          "Duplica una targeta de joc i canvia títol + enllaç (href) al nou HTML.",
+        );
+      });
+
+      // Route mini on open (UIX feedback)
+      document.querySelectorAll("summary[data-route]").forEach((sum) => {
+        sum.addEventListener("click", () => {
+          // click happens before open toggles; delay tiny:
+          setTimeout(() => {
+            // Build mini route from the clicked summary if it is now open or just interacted
+            const r = sum.getAttribute("data-route");
+            routeMini.textContent = r || "Inici";
+          }, 0);
+        });
+      });
+
+      // Simple, robust search filter (matches in summaries + cards)
+      function escapeHtml(s) {
+        return s.replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#039;",
+            })[m],
+        );
+      }
+      function stripMarks(el) {
+        el.querySelectorAll("mark").forEach((m) => {
+          const t = document.createTextNode(m.textContent);
+          m.replaceWith(t);
+        });
+      }
+      function highlight(el, term) {
+        stripMarks(el);
+        if (!term) return;
+        const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+        const texts = [];
+        while (walk.nextNode()) texts.push(walk.currentNode);
+        const re = new RegExp(
+          term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+          "ig",
+        );
+        for (const node of texts) {
+          const val = node.nodeValue;
+          if (!val || !re.test(val)) continue;
+          re.lastIndex = 0;
+          const frag = document.createDocumentFragment();
+          let last = 0;
+          let m;
+          while ((m = re.exec(val))) {
+            const a = val.slice(last, m.index);
+            if (a) frag.appendChild(document.createTextNode(a));
+            const mk = document.createElement("mark");
+            mk.textContent = val.slice(m.index, m.index + m[0].length);
+            frag.appendChild(mk);
+            last = m.index + m[0].length;
+          }
+          const b = val.slice(last);
+          if (b) frag.appendChild(document.createTextNode(b));
+          node.parentNode.replaceChild(frag, node);
+        }
+      }
+
+      function applySearch() {
+        const term = searchEl.value.trim().toLowerCase();
+        const cards = Array.from(
+          document.querySelectorAll(".card[data-route]"),
+        );
+        const sums = Array.from(document.querySelectorAll("summary"));
+        const courses = Array.from(
+          document.querySelectorAll('details[data-level="course"]'),
+        );
+        const modules = Array.from(
+          document.querySelectorAll('details[data-level="module"]'),
+        );
+
+        // Reset visibility
+        cards.forEach((c) => (c.style.display = ""));
+        sums.forEach((s) => (s.style.display = ""));
+        courses.forEach((d) => (d.style.display = ""));
+        modules.forEach((d) => (d.style.display = ""));
+
+        // Remove highlights
+        document
+          .querySelectorAll("#catalog")
+          .forEach((root) => stripMarks(root));
+
+        if (!term) {
+          resultsTag.textContent = "Mostrant: tot";
+          return;
+        }
+
+        // Filter cards by route + text content
+        let shown = 0;
+        for (const c of cards) {
+          const hay = (
+            c.getAttribute("data-route") +
+            " " +
+            c.textContent
+          ).toLowerCase();
+          const ok = hay.includes(term);
+          c.style.display = ok ? "" : "none";
+          if (ok) {
+            shown++;
+            highlight(c, term);
+          }
+        }
+
+        // Hide empty modules/courses based on visible cards inside
+        for (const m of modules) {
+          const anyVisible = Array.from(
+            m.querySelectorAll(".card[data-route]"),
+          ).some((x) => x.style.display !== "none");
+          if (!anyVisible) {
+            m.style.display = "none";
+          } else {
+            m.open = true; // help user
+          }
+        }
+        for (const co of courses) {
+          const anyVisible = Array.from(
+            co.querySelectorAll('details[data-level="module"]'),
+          ).some((x) => x.style.display !== "none");
+          if (!anyVisible) {
+            co.style.display = "none";
+          } else {
+            co.open = true; // help user
+          }
+        }
+
+        // Highlight summaries too (optional but nice)
+        for (const s of sums) {
+          const hay = s.textContent.toLowerCase();
+          if (hay.includes(term)) {
+            highlight(s, term);
+          }
+        }
+
+        resultsTag.textContent = `Mostrant: ${shown} joc(s)`;
+        toast(`Filtre: “${searchEl.value.trim()}” → ${shown} resultat(s)`);
+      }
+
+      searchEl.addEventListener("input", applySearch);
+
+      // Friendly warning if game file not found (can’t truly check offline; just a hint)
+      document.querySelectorAll("a[data-game]").forEach((a) => {
+        a.addEventListener("click", () => {
+          toast(
+            "Si no s’obre: comprova que el fitxer existeix i està al mateix directori (href).",
+          );
+        });
+      });
+    </script>
+  </body>
 </html>

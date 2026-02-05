@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ofimàtica SMX • BD • Models E/R i pas a taules</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#111b3a;
+      --card:#0f1733cc;
+      --stroke:#2b3a7a;
+      --text:#eaf1ff;
+      --muted:#a9b7e6;
+      --good:#2ee59d;
+      --bad:#ff4d6d;
+      --warn:#ffd166;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --speed: 160ms;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      overflow-x:hidden;
+      background:
+        radial-gradient(1200px 800px at 15% 20%, rgba(77,124,255,.35), transparent 60%),
+        radial-gradient(900px 700px at 80% 35%, rgba(255,61,141,.25), transparent 60%),
+        radial-gradient(1000px 800px at 50% 90%, rgba(46,229,157,.18), transparent 65%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      position:relative;
+    }
+
+    .grid{
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(600px 400px at 50% 25%, black 30%, transparent 75%);
+      opacity:.7;
+      pointer-events:none;
+      animation: drift 9s linear infinite;
+    }
+    @keyframes drift{ 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-64px,-64px,0)} }
+
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px 14px;
+      position:relative;
+      z-index:1;
+    }
+    .app{ width:min(980px, 100%); display:grid; gap:14px; }
+
+    header{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(15,23,51,.82), rgba(15,23,51,.52));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+    .logo{
+      width:44px; height:44px; border-radius:14px;
+      background:
+        radial-gradient(18px 18px at 30% 35%, rgba(255,255,255,.65), transparent 60%),
+        linear-gradient(135deg, rgba(77,124,255,.95), rgba(255,61,141,.95));
+      box-shadow: 0 10px 20px rgba(0,0,0,.35);
+      position:relative; overflow:hidden;
+    }
+    .logo:after{
+      content:""; position:absolute; inset:-30%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+      transform: rotate(25deg);
+      animation: shine 3.2s ease-in-out infinite;
+    }
+    @keyframes shine{ 0%,55%{transform:translateX(-60%) rotate(25deg)} 100%{transform:translateX(60%) rotate(25deg)} }
+
+    .title{ display:flex; flex-direction:column; line-height:1.1; min-width:0; }
+    .title b{font-size:14px; letter-spacing:.2px}
+    .title span{font-size:12px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+    .hud{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:var(--text); font-size:12px; user-select:none;
+    }
+    .pill strong{font-variant-numeric: tabular-nums}
+
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:12px;
+      transition: transform var(--speed) ease, background var(--speed) ease, border-color var(--speed) ease;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24)}
+    .btn:active{transform: translateY(0px) scale(.99)}
+    .btn.primary{
+      border-color: rgba(77,124,255,.45);
+      background: linear-gradient(135deg, rgba(77,124,255,.35), rgba(124,77,255,.28));
+    }
+
+    .stage{
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(15,23,51,.80), rgba(15,23,51,.45));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      position:relative;
+    }
+    .progress{
+      height:10px;
+      background: rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      position:relative;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(46,229,157,.9), rgba(77,124,255,.9), rgba(255,61,141,.9));
+      transition: width 200ms linear;
+      filter: drop-shadow(0 0 10px rgba(46,229,157,.35));
+    }
+    .panel{ padding:16px; display:grid; gap:14px; }
+
+    .card{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      background: rgba(0,0,0,.10);
+      padding:14px;
+      display:grid;
+      gap:10px;
+      transform-origin: center;
+      animation: pop .22s ease-out;
+    }
+    @keyframes pop{ from{transform: translateY(6px) scale(.985); opacity:.0} to{transform: translateY(0) scale(1); opacity:1} }
+
+    .qhead{ display:flex; align-items:flex-start; gap:10px; justify-content:space-between; }
+    .qmeta{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tag{
+      font-size:11px; color:var(--muted);
+      padding:6px 9px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+    }
+    .question{ font-size:18px; font-weight:900; letter-spacing:.2px; margin:0; line-height:1.25; }
+    .sub{ margin:0; color:var(--muted); font-size:12px; }
+
+    .answers{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width:740px){ .answers{grid-template-columns: 1fr;} .question{font-size:17px} }
+
+    .opt{
+      position:relative;
+      border-radius: 16px;
+      padding:14px 14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      overflow:hidden;
+      user-select:none;
+      transition: transform var(--speed) ease, border-color var(--speed) ease, background var(--speed) ease;
+      min-height:58px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+    }
+    .opt:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.09)}
+    .opt:active{transform: translateY(0px) scale(.995)}
+    .badge{
+      width:26px; height:26px; border-radius:10px;
+      display:grid; place-items:center; font-size:12px;
+      color:rgba(255,255,255,.95);
+      flex:0 0 auto;
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+    }
+    .c1{background: linear-gradient(135deg, rgba(255,61,141,.95), rgba(255,209,102,.55))}
+    .c2{background: linear-gradient(135deg, rgba(77,124,255,.95), rgba(124,77,255,.55))}
+    .c3{background: linear-gradient(135deg, rgba(124,77,255,.95), rgba(46,229,157,.55))}
+    .c4{background: linear-gradient(135deg, rgba(46,229,157,.95), rgba(77,124,255,.55))}
+
+    .opt.correct{ border-color: rgba(46,229,157,.65); background: rgba(46,229,157,.12); transform: translateY(-1px); }
+    .opt.wrong{ border-color: rgba(255,77,109,.65); background: rgba(255,77,109,.10); }
+    .opt.dim{opacity:.55}
+
+    .footerRow{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      flex-wrap:wrap; color:var(--muted); font-size:12px;
+    }
+    .mini{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .center{
+      text-align:center;
+      padding:20px;
+      display:grid;
+      gap:12px;
+    }
+    .big{ font-size:28px; font-weight:1000; letter-spacing:.2px; margin:6px 0 0; }
+    .lead{ margin:0; color:var(--muted); font-size:13px; line-height:1.4; }
+
+    .grid2{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin-top:6px; }
+    @media (max-width:740px){.grid2{grid-template-columns:1fr}}
+    .set{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      text-align:left;
+      display:grid;
+      gap:8px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    select, input[type="number"]{
+      width:100%;
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      padding:10px 10px;
+      outline:none;
+      font-weight:800;
+    }
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      user-select:none;
+    }
+    .toggle input{accent-color: #6f8cff}
+
+    #fx{ position:fixed; inset:0; pointer-events:none; z-index: 3; }
+    .shake{ animation: shake 260ms ease-in-out; }
+    @keyframes shake{
+      0%{transform:translateX(0)}
+      25%{transform:translateX(-6px)}
+      55%{transform:translateX(5px)}
+      80%{transform:translateX(-3px)}
+      100%{transform:translateX(0)}
+    }
+
+    .toast{
+      position:fixed; left:50%; bottom:18px;
+      transform:translateX(-50%);
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding:10px 14px;
+      color:var(--text);
+      font-size:12px;
+      z-index: 4;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 140ms ease, transform 140ms ease;
+      backdrop-filter: blur(10px);
+    }
+    .toast.on{ opacity:1; transform: translateX(-50%) translateY(-2px); }
+    code.inline{
+      color:#eaf1ff;
+      background:rgba(255,255,255,.06);
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.10);
+      font-weight:800;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <canvas id="fx"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <!-- Música opcional: posa un fitxer "music.mp3" al costat de l'HTML (o canvia el nom aquí) -->
+  <audio id="bgm" src="./../../music.mp3" loop preload="auto"></audio>
+
+  <div class="wrap">
+    <div class="app" role="application" aria-label="Kahoot BD Ofimàtica">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <b>Ofimàtica SMX • Bases de dades</b>
+            <span>Models E/R • Cardinalitats • Pas a taules (sense SQL)</span>
+          </div>
+        </div>
+        <div class="hud">
+          <div class="pill">Punts: <strong id="score">0</strong></div>
+          <div class="pill">Ratxa: <strong id="streak">0</strong></div>
+          <button class="btn" id="musicBtn" title="Música de fons">♪ Música</button>
+          <button class="btn" id="restartBtn" title="Reiniciar">↻ Reinicia</button>
+        </div>
+      </header>
+
+      <section class="stage" aria-live="polite">
+        <div class="progress"><div class="bar" id="bar"></div></div>
+        <div class="panel" id="panel"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     *  Pool 50 (Català, dins nivell SMX GM)
+     *  Temari: models E/R (1,2,3 relacions i ternàries), cardinalitats, pas a taules (PK/FK/atributs) sense SQL
+     ***********************/
+    const POOL = [
+      {cat:"E/R", q:"En un model E/R, quina afirmació descriu millor una entitat?", a:[
+        "Un conjunt d'objectes del món real amb atributs comuns",
+        "Una regla que uneix tres taules en una consulta",
+        "Un camp que apunta sempre a una clau primària d'una altra taula",
+        "Una propietat que només pot tenir valors numèrics"
+      ], c:0},
+
+      {cat:"E/R", q:"Quin és l'objectiu principal d'una relació en un E/R?", a:[
+        "Representar l'associació entre entitats",
+        "Definir el tipus de dades de cada atribut",
+        "Substituir la necessitat de claus primàries",
+        "Evitar que hi hagi atributs repetits"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"En una cardinalitat (1,N) entre A i B (mirant des d'A cap a B), quina lectura és correcta?", a:[
+        "Un A pot associar-se amb molts B; un B s'associa amb un A",
+        "Un A s'associa amb un B; un B s'associa amb molts A",
+        "Un A s'associa amb molts B; un B també amb molts A",
+        "Un A no pot associar-se mai amb B"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Quina diferència clau hi ha entre (0,1) i (1,1)?", a:[
+        "(0,1) és opcional; (1,1) és obligatori",
+        "(0,1) és obligatori; (1,1) és opcional",
+        "(0,1) vol dir molts; (1,1) vol dir un",
+        "No hi ha cap diferència: són equivalents"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Quan una relació és (0,N), això implica:", a:[
+        "Pot no existir cap relació o n'hi pot haver moltes",
+        "Sempre hi ha exactament una relació",
+        "Sempre hi ha com a mínim una relació i com a màxim una",
+        "Hi ha com a mínim dos registres relacionats"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"Regla general: en una relació 1:N, on s'acostuma a col·locar la FK?", a:[
+        "A la taula del costat N apuntant a la PK del costat 1",
+        "A la taula del costat 1 apuntant a la PK del costat N",
+        "En una tercera taula sempre",
+        "No cal FK, només un atribut text"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"En una relació 1:1, una opció típica (no l'única) per implementar és:", a:[
+        "Posar una FK en una de les dues taules i fer-la única",
+        "Crear sempre una taula d'unió amb dues FKs",
+        "Duplicar tots els atributs a les dues taules",
+        "Convertir la relació en 1:N automàticament"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"Per a una relació N:M entre A i B, el pas habitual és:", a:[
+        "Crear una taula d'unió amb dues FKs (i atributs de la relació si n'hi ha)",
+        "Posar una FK a A cap a B i ja està",
+        "Posar una FK a B cap a A i ja està",
+        "Unir les dues taules en una sola"
+      ], c:0},
+
+      {cat:"PK/FK", q:"Quina descripció encaixa millor amb una PK?", a:[
+        "Atribut (o conjunt) que identifica unívocament cada registre",
+        "Atribut que sempre pot ser NULL",
+        "Atribut que repeteix valors per agrupar registres",
+        "Atribut que només existeix a taules d'unió"
+      ], c:0},
+
+      {cat:"PK/FK", q:"Una FK serveix per:", a:[
+        "Enllaçar registres entre taules mantenint la coherència referencial",
+        "Fer que totes les consultes siguin més ràpides automàticament",
+        "Evitar que hi hagi cap valor repetit a la taula",
+        "Convertir una relació N:M en 1:1"
+      ], c:0},
+
+      {cat:"Relació amb atributs", q:"Si una relació té atributs propis (p.ex. data, quantitat), en el pas a taules aquests atributs van:", a:[
+        "A la taula que representa la relació (sobretot si és N:M o ternària)",
+        "Sempre a una de les entitats 'perquè sí'",
+        "A totes dues entitats duplicats",
+        "No es poden representar sense SQL"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Si 'Client' i 'Comanda' és 1:N (un client fa moltes comandes), quina implementació és més coherent?", a:[
+        "FK id_client dins de COMANDA apuntant a CLIENT",
+        "FK id_comanda dins de CLIENT apuntant a COMANDA",
+        "Taula CLIENT_COMANDA amb una sola FK",
+        "Cap FK, només un camp 'nom_client' a COMANDA"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Una relació 0:1 entre A i B vol dir que per a un A:", a:[
+        "Pot existir 0 o 1 B associat",
+        "Sempre existeixen molts B associats",
+        "Sempre existeix exactament 1 B associat",
+        "Com a mínim existeixen 2 B associats"
+      ], c:0},
+
+      {cat:"E/R", q:"Què representa la 'participació' (opcional/obligatòria) en una relació?", a:[
+        "Si un registre pot existir sense estar relacionat",
+        "Si un atribut és numèric o alfanumèric",
+        "Si una taula necessita clau primària",
+        "Si la relació és ternària o binària"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"Quan una relació 1:N té atributs (p.ex. 'dataAlta' en una assignació), la col·locació típica és:", a:[
+        "A la taula del costat N, juntament amb la FK",
+        "A la taula del costat 1, perquè és la 'principal'",
+        "En una taula d'unió sempre, encara que sigui 1:N",
+        "Com a PK de la taula del costat 1"
+      ], c:0},
+
+      {cat:"E/R", q:"Quina afirmació és més correcta sobre una relació ternària?", a:[
+        "Implica simultàniament tres entitats en una mateixa associació",
+        "És el mateix que dues relacions 1:N independents",
+        "No pot tenir atributs",
+        "Sempre es pot transformar en 1:1 sense perdre informació"
+      ], c:0},
+
+      {cat:"Ternàries", q:"Implementació habitual d'una relació ternària A-B-C:", a:[
+        "Crear una taula amb tres FKs (cap a A, B i C) i els atributs de la relació",
+        "Posar una FK a A i una altra a B, i ignorar C",
+        "Crear dues taules d'unió i ja està, sempre equivalent",
+        "Fusionar les tres entitats en una sola taula"
+      ], c:0},
+
+      {cat:"Ternàries", q:"Quan NO és equivalent substituir una ternària per tres binàries?", a:[
+        "Quan la relació depèn de la combinació dels tres alhora (es perd restricció)",
+        "Quan les tres entitats tenen PK",
+        "Quan hi ha atributs a les entitats",
+        "Quan alguna entitat té més d'un atribut"
+      ], c:0},
+
+      {cat:"N:M", q:"En una taula d'unió per a N:M, quina opció de PK és habitual?", a:[
+        "PK composta per (FK_A, FK_B) si no hi ha identificador propi",
+        "PK només FK_A, i FK_B no importa",
+        "PK només FK_B, i FK_A no importa",
+        "No cal PK en taules d'unió"
+      ], c:0},
+
+      {cat:"N:M", q:"Si la relació N:M té atribut propi (p.ex. 'hores' en ALUMNE-CURS), la PK composta segueix sent viable perquè:", a:[
+        "L'atribut 'hores' no identifica; identifiquen les dues FKs",
+        "Qualsevol atribut pot ser PK encara que variï",
+        "És obligatori afegir una PK artificial sempre",
+        "L'atribut propi s'ha de repetir a les entitats"
+      ], c:0},
+
+      {cat:"1:1", q:"En 1:1, quin criteri pràctic ajuda a decidir on posar la FK?", a:[
+        "Posar-la al costat amb participació obligatòria o amb menys registres",
+        "Posar-la sempre al costat esquerre del dibuix",
+        "Posar-la sempre al costat amb més atributs",
+        "Posar-la sempre en una taula d'unió"
+      ], c:0},
+
+      {cat:"0:1", q:"Si A té una relació 0:1 amb B i ho implementes amb FK a A, què s'espera del valor FK quan no hi ha B?", a:[
+        "Que sigui NULL (o buit) perquè és opcional",
+        "Que sigui 0 perquè indica 'cap registre'",
+        "Que sigui qualsevol valor aleatori",
+        "Que sigui obligatori igualment"
+      ], c:0},
+
+      {cat:"1:N", q:"Relació 1:N: si un registre del costat 1 s'elimina, què pot passar amb els del costat N (conceptualment)?", a:[
+        "Queden orfes si no es gestiona, perquè depenien de la FK",
+        "S'eliminen sempre automàticament per definició del model",
+        "Canvien la seva PK per adaptar-se",
+        "Es converteixen en entitats independents sense cap canvi"
+      ], c:0},
+
+      {cat:"E/R", q:"Quin error és típic quan es confon una relació N:M amb una 1:N?", a:[
+        "Intentar posar una sola FK i perdre múltiples associacions possibles",
+        "Crear una taula d'unió i duplicar informació",
+        "Fer una PK composta i perdre integritat",
+        "Posar atributs a les entitats i no a la relació"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"En una taula d'unió, les FKs apunten a:", a:[
+        "Les PKs de les dues (o tres) entitats que relaciona",
+        "Qualsevol atribut que sigui numèric",
+        "Els atributs 'nom' de les entitats",
+        "La FK de la taula del costat N"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Si un professor pot impartir 0..N mòduls, i cada mòdul l'imparteix 1 professor, la relació és:", a:[
+        "1:N (PROFESSOR → MÒDUL) amb participació opcional a professor",
+        "N:M perquè un professor pot tenir molts mòduls",
+        "1:1 perquè hi ha un professor per mòdul",
+        "0:1 perquè és opcional"
+      ], c:0},
+
+      {cat:"Taules (escrit)", q:"Quan 'escriviu les taules' sense SQL, una definició mínima correcta inclou:", a:[
+        "Nom de taula + atributs + PK + FKs (i a què apunten)",
+        "Nom de taula + només atributs de text",
+        "Nom de taula + PK, sense cap FK",
+        "Nom de taula + consultes que s'hi faran"
+      ], c:0},
+
+      {cat:"Atributs", q:"Quin d'aquests és un error de modelatge bàsic?", a:[
+        "Guardar múltiples valors diferents en un sol atribut (p.ex. 'telèfons' en un camp)",
+        "Definir una PK per a cada entitat",
+        "Identificar relacions entre entitats",
+        "Usar una taula d'unió per a N:M"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Com es diferencia una relació 1:N d'una N:M a l'hora de passar a taules?", a:[
+        "1:N: FK al costat N; N:M: taula d'unió",
+        "1:N: taula d'unió; N:M: FK al costat 1",
+        "Totes dues es fan amb una FK al costat 1",
+        "No hi ha diferència, només canvia el nom de la FK"
+      ], c:0},
+
+      {cat:"Relació (atributs)", q:"Si 'Matrícula' (data, nota) uneix ALUMNE i MÒDUL i un alumne pot matricular-se a molts mòduls, i un mòdul té molts alumnes, això és:", a:[
+        "N:M amb atributs de relació (taula MATRÍCULA amb FK_alumne, FK_mòdul, data, nota)",
+        "1:N amb FK dins d'ALUMNE cap a MÒDUL",
+        "1:1 perquè hi ha data i nota",
+        "Una ternària obligatòria"
+      ], c:0},
+
+      {cat:"3 relacions", q:"En un enunciat amb 3 entitats A, B i C i 2 relacions binàries separades, què és habitual?", a:[
+        "Dues relacions independents cadascuna amb la seva regla (FK o taula d'unió)",
+        "Una única taula que contingui tot perquè són 3 entitats",
+        "Forçar una ternària sempre",
+        "Eliminar una relació per simplificar"
+      ], c:0},
+
+      {cat:"Ternàries", q:"En una ternària, quina combinació sol identificar una ocurrència de la relació?", a:[
+        "La combinació de les tres FKs (o una PK artificial si es vol)",
+        "Només la FK de la primera entitat",
+        "Només l'atribut no clau 'data'",
+        "La suma de les tres PKs"
+      ], c:0},
+
+      {cat:"1:1", q:"Si dues entitats tenen relació 1:1 i decideixes fer una sola taula final, quan és més raonable conceptualment?", a:[
+        "Quan realment representen el mateix objecte i no té sentit separar-les",
+        "Sempre és millor unir-les, sense excepció",
+        "Només quan és N:M",
+        "Només si hi ha una ternària"
+      ], c:0},
+
+      {cat:"Opcionalitat", q:"Si la participació d'una entitat en una relació és opcional (0..), això afecta:", a:[
+        "Si la FK pot quedar buida (NULL) en la implementació",
+        "Si la PK pot repetir-se",
+        "Si els atributs han de ser numèrics",
+        "Si és necessari fer una ternària"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"Una relació 1:N sense atributs a la relació: quina és la informació mínima extra que afegeixes a la taula del costat N?", a:[
+        "Una FK apuntant a la PK del costat 1",
+        "Una nova PK per a tots els registres",
+        "Un atribut text amb el nom del costat 1",
+        "Una taula d'unió encara que no calgui"
+      ], c:0},
+
+      {cat:"Pas a taules", q:"En una N:M, si uses PK composta (FK_A, FK_B), què passa si intentes repetir exactament la mateixa parella?", a:[
+        "No es podria perquè la PK composta ho impediria (mateixa associació duplicada)",
+        "Es permet perquè les FKs no compten com PK",
+        "Es permet però canvia la PK de les entitats",
+        "Es converteix automàticament en una ternària"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Quina lectura és correcta per a 'Cada comanda conté 1..N línies; cada línia pertany a 1 comanda'?", a:[
+        "COMANDA (1) — (N) LÍNIA amb participació obligatòria a línia i a comanda (mínim 1 línia)",
+        "N:M perquè hi ha moltes línies",
+        "1:1 perquè cada línia és única",
+        "0:1 perquè una comanda pot no tenir línies"
+      ], c:0},
+
+      {cat:"Enunciats", q:"Quan un enunciat diu 'pot tenir' i no diu 'sempre', això sol apuntar a:", a:[
+        "Participació opcional (0..)",
+        "Participació obligatòria (1..)",
+        "Relació sempre ternària",
+        "Que no cal modelar la relació"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Si una entitat B ha d'estar relacionada obligatòriament amb A (1..1) i poses la FK a B, quin requisit conceptual tens?", a:[
+        "La FK a B no pot quedar buida (és obligatòria)",
+        "La FK a B ha de ser una PK sempre",
+        "La PK d'A ha de canviar-se",
+        "B deixa de ser entitat"
+      ], c:0},
+
+      {cat:"Errors típics", q:"Quin distractor és més típic en taules escrites quan hi ha N:M?", a:[
+        "Oblidar la taula d'unió i posar una sola FK",
+        "Posar PK a les entitats",
+        "Anotar a què apunten les FKs",
+        "Separar atributs de cada entitat"
+      ], c:0},
+
+      {cat:"3 relacions", q:"Si tens un enunciat amb 3 entitats i exactament 3 relacions binàries (una entre cada parella), això vol dir necessàriament:", a:[
+        "Que NO és automàticament ternària: són tres relacions diferents",
+        "Que és una ternària i s'ha de fer una taula amb 3 FKs",
+        "Que s'ha d'unir tot en una taula",
+        "Que no poden existir cardinalitats"
+      ], c:0},
+
+      {cat:"Ternàries", q:"Què és una trampa habitual quan es vol reemplaçar una ternària per tres binàries?", a:[
+        "Que poden aparèixer combinacions incoherents que la ternària impedia",
+        "Que sempre surten menys taules i això és dolent",
+        "Que no es poden fer FKs en binàries",
+        "Que les cardinalitats desapareixen"
+      ], c:0},
+
+      {cat:"Relació (atributs)", q:"Si una relació 1:N té atributs propis (p.ex. 'dataAssignació'), què és més coherent?", a:[
+        "Posar aquests atributs a la taula del costat N junt amb la FK",
+        "Posar-los a la taula del costat 1 perquè és el 'cap'",
+        "Crear una taula d'unió sempre encara que no calgui",
+        "Convertir la relació en N:M"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"Quina opció descriu millor una relació 1:1 amb opcionalitat a un costat?", a:[
+        "Un registre d'un costat pot existir sense l'altre, però si existeix és únic",
+        "Cada costat sempre té molts registres relacionats",
+        "Cap costat pot existir sense l'altre i poden ser molts",
+        "No es pot implementar amb PK/FK"
+      ], c:0},
+
+      {cat:"Taules (escrit)", q:"Quan escrius la taula d'unió d'una N:M, què és més important que quedi clar?", a:[
+        "Les dues FKs i a quines PK apunten (i la PK composta si s'usa)",
+        "El tipus de dades exacte (VARCHAR, INT...)",
+        "La consulta final en SQL",
+        "La mida del disc on s'emmagatzema"
+      ], c:0},
+
+      {cat:"PK/FK", q:"Si una entitat no té cap atribut 'naturalment únic', en nivell bàsic és habitual:", a:[
+        "Crear un identificador (ID) com a PK",
+        "No posar PK i confiar en el nom",
+        "Fer la PK amb tots els atributs de la taula",
+        "Usar una FK d'una altra taula com a PK sempre"
+      ], c:0},
+
+      {cat:"Cardinalitats", q:"En una relació 0..N, quin error de lectura és més freqüent?", a:[
+        "Confondre 0..N amb 1..N i fer-la obligatòria",
+        "Confondre 0..N amb 0..1 i fer-la única",
+        "Confondre 0..N amb 1..1 i fer-la 1:1",
+        "No dibuixar l'entitat perquè és opcional"
+      ], c:0},
+
+      {cat:"E/R", q:"Què és més coherent si un atribut depèn clarament de la relació i no d'una entitat (p.ex. 'dataMatriculació')?", a:[
+        "Tractar-lo com atribut de la relació (i posar-lo a la taula que la representa)",
+        "Posar-lo a l'entitat amb menys atributs",
+        "Repetir-lo a totes dues entitats",
+        "Convertir l'atribut en una entitat"
+      ], c:0},
+
+      {cat:"Ternàries", q:"En una ternària amb atribut 'rol', on es col·loca 'rol' en el pas a taules?", a:[
+        "A la taula ternària (la que té les 3 FKs)",
+        "A l'entitat A perquè és la primera",
+        "A l'entitat B perquè sol ser la principal",
+        "A l'entitat C perquè ho demana la cardinalitat"
+      ], c:0},
+
+      {cat:"Repàs", q:"Quina correspondència és la més correcta?", a:[
+        "Entitat → Taula; Atribut → Camp; Relació → FK o taula d'unió",
+        "Entitat → Camp; Atribut → Taula; Relació → PK",
+        "Entitat → Relació; Atribut → Ternària; Relació → Atribut",
+        "Entitat → SQL; Atribut → Índex; Relació → Consulta"
+      ], c:0}
+    ];
+
+    if (POOL.length !== 50) console.warn("POOL hauria de ser 50. Actual:", POOL.length);
+
+    /***********************
+     * Utilitats
+     ***********************/
+    const $ = (s)=>document.querySelector(s);
+    const panel = $("#panel");
+    const bar = $("#bar");
+    const scoreEl = $("#score");
+    const streakEl = $("#streak");
+    const toastEl = $("#toast");
+    const fx = $("#fx");
+    const bgm = $("#bgm");
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = (Math.random()*(i+1))|0;
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+    function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("on");
+      clearTimeout(toastEl._t);
+      toastEl._t=setTimeout(()=>toastEl.classList.remove("on"),950);
+    }
+
+    // Beep SFX
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx=null;
+    function beep(type="good"){
+      try{
+        if(!actx) actx=new AudioCtx();
+        const t0=actx.currentTime;
+        const o=actx.createOscillator();
+        const g=actx.createGain();
+        o.type="triangle";
+        o.frequency.value=(type==="good")?740:220;
+        g.gain.setValueAtTime(0.0001,t0);
+        g.gain.exponentialRampToValueAtTime(0.15,t0+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
+        o.connect(g).connect(actx.destination);
+        o.start(t0); o.stop(t0+0.2);
+      }catch(e){}
+    }
+
+    // Confeti
+    const confetti={
+      parts:[], running:false,
+      resize(){ fx.width=innerWidth*devicePixelRatio; fx.height=innerHeight*devicePixelRatio; },
+      burst(x,y){
+        this.resize();
+        const N=110;
+        for(let i=0;i<N;i++){
+          this.parts.push({
+            x:x*devicePixelRatio, y:y*devicePixelRatio,
+            vx:(Math.random()*2-1)*8*devicePixelRatio,
+            vy:(Math.random()*-1.2-0.2)*12*devicePixelRatio,
+            g:0.55*devicePixelRatio,
+            s:(Math.random()*3+2)*devicePixelRatio,
+            a:1, r:Math.random()*Math.PI, vr:(Math.random()*2-1)*0.25
+          });
+        }
+        if(!this.running){ this.running=true; requestAnimationFrame(()=>this.tick()); }
+      },
+      tick(){
+        const ctx=fx.getContext("2d");
+        ctx.clearRect(0,0,fx.width,fx.height);
+        for(const p of this.parts){
+          p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; p.a*=0.985;
+        }
+        this.parts=this.parts.filter(p=>p.a>0.06 && p.y<fx.height+40*devicePixelRatio);
+        for(const p of this.parts){
+          ctx.save();
+          ctx.globalAlpha=p.a;
+          ctx.translate(p.x,p.y);
+          ctx.rotate(p.r);
+          ctx.fillStyle=`hsl(${(p.x+p.y)%360} 90% 60%)`;
+          ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.65);
+          ctx.restore();
+        }
+        if(this.parts.length) requestAnimationFrame(()=>this.tick());
+        else this.running=false;
+      }
+    };
+    addEventListener("resize",()=>confetti.resize(),{passive:true});
+
+    /***********************
+     * Estat
+     ***********************/
+    const state={
+      started:false,
+      idx:0,
+      total:20,
+      score:0,
+      streak:0,
+      correct:0,          // % final
+      streakMode:true,    // ON/OFF
+      timerOn:false,
+      timePerQ:12,
+      timeLeft:0,
+      tickId:null,
+      questions:[]
+    };
+
+    function setBar(){
+      const pct = state.started ? (state.idx/state.total)*100 : 0;
+      bar.style.width = pct.toFixed(2)+"%";
+    }
+
+    function buildRun(total){
+      const qs = shuffle(POOL.slice()); // preguntes sempre barrejades
+      return qs.slice(0,total).map(q=>{
+        const opts = q.a.map((txt,i)=>({txt,i}));
+        shuffle(opts); // respostes barrejades
+        const newC = opts.findIndex(o=>o.i===q.c);
+        return {cat:q.cat,q:q.q,opts:opts.map(o=>o.txt),c:newC};
+      });
+    }
+
+    function reset(){
+      clearInterval(state.tickId);
+      state.started=false;
+      state.idx=0;
+      state.score=0;
+      state.streak=0;
+      state.correct=0;
+      state.questions=[];
+      scoreEl.textContent="0";
+      streakEl.textContent="0";
+      setBar();
+      renderStart();
+    }
+
+    /***********************
+     * Pantalla inicial
+     ***********************/
+    function renderStart(){
+      panel.innerHTML=`
+        <div class="center">
+          <div class="big">Mode Kahoot: <span style="background:linear-gradient(90deg,#2ee59d,#4d7cff,#ff3d8d); -webkit-background-clip:text; background-clip:text; color:transparent;">BD (E/R)</span></div>
+          <p class="lead">
+            Preguntes i respostes en <b>ordre aleatori</b>. Sense esperes: respons → feedback → següent.
+            <br/>Dreceres: <span class="tag">1</span> <span class="tag">2</span> <span class="tag">3</span> <span class="tag">4</span>
+          </p>
+
+          <div class="grid2">
+            <div class="set">
+              <label for="count">Nombre de preguntes (pool = 50)</label>
+              <select id="count">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+              </select>
+              <div class="sub">Cada partida baralla preguntes i opcions automàticament.</div>
+            </div>
+
+            <div class="set">
+              <label>Mode ratxes</label>
+              <div class="toggle" title="Activat: bonus per ratxa i (si hi ha) temps. Desactivat: cada encert = +100 fix">
+                <input id="streakMode" type="checkbox" checked />
+                <span>Activar ratxes (bonus)</span>
+              </div>
+
+              <label>Temporitzador (opcional)</label>
+              <div class="toggle">
+                <input id="timer" type="checkbox" />
+                <span>Activar</span>
+              </div>
+              <label for="secs">Segons per pregunta</label>
+              <input id="secs" type="number" min="5" max="30" step="1" value="12" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:6px">
+            <button class="btn primary" id="startBtn">▶ Comença</button>
+          </div>
+
+          <p class="lead">
+            Música: botó <b>♪ Música</b>. Si no sona, posa <span class="tag">music.mp3</span> al costat de l’HTML.
+          </p>
+        </div>
+      `;
+
+      $("#startBtn").onclick=()=>{
+        const total=parseInt($("#count").value,10);
+        const timerOn=$("#timer").checked;
+        const secs=clamp(parseInt($("#secs").value,10)||12,5,30);
+        const streakMode=$("#streakMode").checked;
+        start(total, timerOn, secs, streakMode);
+      };
+    }
+
+    function start(total, timerOn, secs, streakMode){
+      state.started=true;
+      state.total=total;
+      state.timerOn=timerOn;
+      state.timePerQ=secs;
+      state.streakMode=streakMode;
+      state.idx=0;
+      state.score=0;
+      state.streak=0;
+      state.correct=0;
+      scoreEl.textContent="0";
+      streakEl.textContent="0";
+      state.questions=buildRun(total);
+      setBar();
+      renderQuestion();
+      toast("Som-hi!");
+    }
+
+    function finish(){
+      clearInterval(state.tickId);
+      state.tickId=null;
+      const pct = Math.round((state.correct/state.total)*100);
+      panel.innerHTML=`
+        <div class="center">
+          <div class="big">🏁 Final</div>
+          <p class="lead">Puntuació total: <b style="color:var(--good)">${state.score}</b> punts</p>
+          <div class="card" style="text-align:left">
+            <div class="qhead">
+              <div class="qmeta">
+                <span class="tag">Preguntes: ${state.total}</span>
+                <span class="tag">Encerts: ${state.correct}</span>
+                <span class="tag">Percentatge: ${pct}%</span>
+              </div>
+            </div>
+            <p class="sub">Mode ratxes: <b>${state.streakMode ? "ON (bonus)" : "OFF (+100 fix)"}</b></p>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn primary" id="againBtn">↻ Una altra</button>
+          </div>
+        </div>
+      `;
+      $("#againBtn").onclick=()=>reset();
+    }
+
+    /***********************
+     * Preguntes
+     ***********************/
+    function renderQuestion(){
+      clearInterval(state.tickId);
+      state.tickId=null;
+
+      if(state.idx>=state.total){ finish(); return; }
+
+      const item=state.questions[state.idx];
+      const n=state.idx+1;
+
+      let timerHtml="";
+      if(state.timerOn){
+        state.timeLeft=state.timePerQ;
+        timerHtml=`<span class="tag">⏱ <b id="tleft">${state.timeLeft}</b>s</span>`;
+      }
+
+      panel.innerHTML=`
+        <div class="card" id="card">
+          <div class="qhead">
+            <div class="qmeta">
+              <span class="tag">Pregunta ${n}/${state.total}</span>
+              <span class="tag">${item.cat}</span>
+              ${timerHtml}
+              <span class="tag">Ratxes: <b>${state.streakMode ? "ON" : "OFF"}</b></span>
+            </div>
+            <div class="tag">+100 base</div>
+          </div>
+
+          <p class="question">${item.q}</p>
+          <p class="sub">Tria una opció (o prem 1–4). Feedback immediat.</p>
+
+          <div class="answers" id="answers">
+            ${item.opts.map((t,i)=>`
+              <div class="opt" data-i="${i}" role="button" tabindex="0" aria-label="Opció ${i+1}">
+                <div class="badge ${["c1","c2","c3","c4"][i]}">${i+1}</div>
+                <div>${t}</div>
+              </div>
+            `).join("")}
+          </div>
+
+          <div class="footerRow">
+            <div class="mini">
+              <span>Progrés</span>
+              <span class="tag">${n}/${state.total}</span>
+              <span style="opacity:.6">•</span>
+              <span>Pista: pensa en regla de pas a taules (FK/taula d'unió) i opcionalitat.</span>
+            </div>
+            <div class="mini">
+              <span class="tag">Punts: <b id="score2">${state.score}</b></span>
+              <span class="tag">Ratxa: <b id="streak2">${state.streak}</b></span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const ans=$("#answers");
+      const onPick=(i)=>handleAnswer(i);
+
+      ans.querySelectorAll(".opt").forEach(el=>{
+        el.addEventListener("click",()=>onPick(parseInt(el.dataset.i,10)));
+        el.addEventListener("keydown",(e)=>{
+          if(e.key==="Enter"||e.key===" "){ e.preventDefault(); onPick(parseInt(el.dataset.i,10)); }
+        });
+      });
+
+      window.onkeydown=(e)=>{
+        if(!state.started) return;
+        const k=e.key;
+        if(k>="1"&&k<="4"){
+          const i=parseInt(k,10)-1;
+          if(i>=0&&i<4) onPick(i);
+        }
+      };
+
+      if(state.timerOn){
+        const tEl=$("#tleft");
+        state.tickId=setInterval(()=>{
+          state.timeLeft--;
+          if(tEl) tEl.textContent=state.timeLeft;
+          if(state.timeLeft<=0){
+            clearInterval(state.tickId);
+            state.tickId=null;
+            handleAnswer(-1,true);
+          }
+        },1000);
+      }
+
+      setBar();
+    }
+
+    function handleAnswer(choice,isTimeout=false){
+      clearInterval(state.tickId);
+      state.tickId=null;
+
+      const item=state.questions[state.idx];
+      const correct=item.c;
+      const card=$("#card");
+      const opts=[...document.querySelectorAll(".opt")];
+
+      if(opts.some(o=>o.classList.contains("correct")||o.classList.contains("wrong"))) return;
+
+      opts.forEach((o,i)=>{
+        if(i===correct) o.classList.add("correct");
+        if(choice===i && i!==correct) o.classList.add("wrong");
+        if(choice!==i && i!==correct) o.classList.add("dim");
+      });
+
+      let gained=0;
+
+      if(choice===correct){
+        state.correct++;
+
+        gained=100; // base sempre
+        if(state.streakMode){
+          state.streak++;
+          gained += Math.min(60, state.streak*6);
+          if(state.timerOn) gained += Math.max(0, (state.timeLeft|0)*3);
+        } else {
+          state.streak = 0;
+        }
+
+        state.score += gained;
+        beep("good");
+
+        scoreEl.textContent=String(state.score);
+        streakEl.textContent=String(state.streak);
+        $("#score2").textContent=String(state.score);
+        $("#streak2").textContent=String(state.streak);
+
+        const r=opts[correct].getBoundingClientRect();
+        confetti.burst(r.left+r.width/2, r.top+r.height/2);
+        toast(`✅ Correcte +${gained}`);
+      } else {
+        state.streak=0;
+        streakEl.textContent="0";
+        if($("#streak2")) $("#streak2").textContent="0";
+        beep("bad");
+        card.classList.add("shake");
+        toast(isTimeout ? "⏰ Temps!" : "❌ Incorrecte");
+      }
+
+      setTimeout(()=>{
+        state.idx++;
+        renderQuestion();
+      },450);
+    }
+
+    /***********************
+     * Música
+     ***********************/
+    let musicOn=false;
+    $("#musicBtn").onclick=async ()=>{
+      try{
+        if(!musicOn){
+          await bgm.play();
+          musicOn=true;
+          toast("♪ Música ON");
+          $("#musicBtn").classList.add("primary");
+        } else {
+          bgm.pause();
+          musicOn=false;
+          toast("♪ Música OFF");
+          $("#musicBtn").classList.remove("primary");
+        }
+      }catch(e){
+        toast("No s'ha pogut reproduir. Afegeix music.mp3 al costat de l'HTML.");
+      }
+    };
+
+    $("#restartBtn").onclick=()=>reset();
+
+    // Inici
+    reset();
+  </script>
+</body>
+</html>
